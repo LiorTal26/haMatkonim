@@ -148,6 +148,7 @@ export default function ChooCelebration({ show, onClose }: ChooCelebrationProps)
           className="modal-content animate-scale-in"
           onClick={e => e.stopPropagation()}
           style={{
+            width: '90%',
             maxWidth: 480,
             background: 'linear-gradient(135deg, rgba(30, 20, 50, 0.9) 0%, rgba(20, 15, 35, 0.95) 100%)',
             border: '1px solid rgba(255, 46, 147, 0.25)',

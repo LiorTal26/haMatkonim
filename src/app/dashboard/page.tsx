@@ -181,8 +181,8 @@ export default function DashboardPage() {
             boxShadow: '0 4px 15px rgba(255, 46, 147, 0.1)',
           }}
         >
-          <span className="choo-pulse" style={{ fontSize: 'var(--text-2xl)' }}>🎉</span>
-          <div>
+          <span className="choo-pulse" style={{ fontSize: 'var(--text-2xl)', flexShrink: 0 }}>🎉</span>
+          <div style={{ flex: 1 }}>
             <h3 style={{ fontWeight: 700, color: '#FF2E93', fontSize: 'var(--text-base)' }}>יום הולדת שמח לצ'ו אהובתי! 🎂❤️</h3>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
               ספר המתכונים המיוחד שלך מופעל כעת במצב יום הולדת חגיגי.
