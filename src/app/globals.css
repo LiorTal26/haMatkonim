@@ -2284,6 +2284,7 @@ a:hover {
 
   .sidebar {
     transform: translateX(-100%);
+    z-index: 500 !important;
   }
 
   [dir="rtl"] .sidebar {
