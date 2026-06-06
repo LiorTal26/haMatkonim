@@ -707,6 +707,10 @@ a:hover {
   transition: all var(--transition-base);
   border: 1px solid transparent;
   position: relative;
+  background: none;
+  font-family: inherit;
+  width: 100%;
+  text-align: start;
 }
 
 .category-card:hover {
