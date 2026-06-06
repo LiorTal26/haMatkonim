@@ -16,6 +16,10 @@ interface AppContextType {
   setTheme: (theme: 'dark' | 'light') => void;
   toggleTheme: () => void;
   dir: 'rtl' | 'ltr';
+  chooMode: boolean;
+  setChooMode: (mode: boolean) => void;
+  showChooGreeting: boolean;
+  setShowChooGreeting: (show: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -23,13 +27,17 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>('he');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [chooMode, setChooModeState] = useState<boolean>(false);
+  const [showChooGreeting, setShowChooGreeting] = useState<boolean>(false);
 
   useEffect(() => {
     // Load preferences from localStorage
     const savedLocale = localStorage.getItem('recipe-book-locale') as Locale;
     const savedTheme = localStorage.getItem('recipe-book-theme') as 'dark' | 'light';
+    const savedChooMode = localStorage.getItem('recipe-book-choo-mode') === 'true';
     if (savedLocale) setLocale(savedLocale);
     if (savedTheme) setTheme(savedTheme);
+    if (savedChooMode) setChooModeState(true);
   }, []);
 
   useEffect(() => {
@@ -43,8 +51,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('recipe-book-locale', locale);
   }, [locale]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-choo-mode', String(chooMode));
+    localStorage.setItem('recipe-book-choo-mode', String(chooMode));
+  }, [chooMode]);
+
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const setChooMode = (mode: boolean) => {
+    setChooModeState(mode);
   };
 
   const value: AppContextType = {
@@ -55,6 +72,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTheme,
     toggleTheme,
     dir: locale === 'he' ? 'rtl' : 'ltr',
+    chooMode,
+    setChooMode,
+    showChooGreeting,
+    setShowChooGreeting,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

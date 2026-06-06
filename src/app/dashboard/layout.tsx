@@ -10,6 +10,8 @@ import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import MobileNav from '@/components/layout/MobileNav';
 import { createClient } from '@/lib/supabase/client';
+import { useApp } from '@/components/providers/AppProvider';
+import ChooCelebration from '@/components/special/ChooCelebration';
 import { Recipe, RecipeFormData, SortOption, DifficultyFilter, TimeFilter, Category, CategoryFormData } from '@/types';
 
 // ─── Recipes Context (single source of truth) ───────────────────────────────
@@ -353,6 +355,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setFilterTime,
   }), [selectedCategoryId, showFavorites, searchQuery, sortBy, filterDifficulty, filterTime]);
 
+  const { showChooGreeting, setShowChooGreeting } = useApp();
+
+  // Easter Egg Search Trigger
+  useEffect(() => {
+    const normalized = searchQuery.toLowerCase().trim();
+    if (normalized === 'choo' || normalized === "צ'ו") {
+      setSearchQuery('');
+      setShowChooGreeting(true);
+    }
+  }, [searchQuery, setShowChooGreeting]);
+
   return (
     <RecipesContext.Provider value={recipesValue}>
       <CategoriesContext.Provider value={categoriesValue}>
@@ -395,6 +408,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setSidebarOpen(false)}
               />
             )}
+            <ChooCelebration show={showChooGreeting} onClose={() => setShowChooGreeting(false)} />
           </div>
         </DashboardContext.Provider>
       </CategoriesContext.Provider>
