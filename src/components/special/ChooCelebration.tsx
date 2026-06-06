@@ -229,7 +229,7 @@ export default function ChooCelebration({ show, onClose }: ChooCelebrationProps)
           >
             ספר המתכונים הזה נבנה באהבה גדולה במיוחד בשבילך, כדי שנמשיך ליצור זיכרונות טעימים ביחד.
             {"\n"}
-            אוהב אותך הכי בעולם!
+            אוהב אותך הכי בעולם, הבעלצ'ו שלך ❤️
           </p>
 
           {/* Action button */}

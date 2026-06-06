@@ -165,6 +165,27 @@
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
 }
 
+/* ─── Choo Mode Rose Theme ─── */
+[data-choo-mode="true"] {
+  --color-primary: #FF2E93;
+  --color-primary-hover: #FF60B2;
+  --color-primary-subtle: rgba(255, 46, 147, 0.12);
+  --color-error: #FF2E93;
+  --color-error-subtle: rgba(255, 46, 147, 0.12);
+  --shadow-glow-primary: 0 0 20px rgba(255, 46, 147, 0.35);
+}
+
+@keyframes heartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.choo-pulse {
+  display: inline-block;
+  animation: heartPulse 1.2s infinite ease-in-out;
+}
+
 /* ─── Base Styles ─── */
 html {
   font-size: 16px;

@@ -76,7 +76,7 @@ export default function DashboardPage() {
   } = useDashboard();
 
   const { recipes, loading } = useRecipes();
-  const { t } = useApp();
+  const { t, chooMode } = useApp();
   const router = useRouter();
 
   // Apply client-side category / search / favorites filtering then sort
@@ -113,6 +113,31 @@ export default function DashboardPage() {
 
   return (
     <>
+      {/* Choo Birthday Banner */}
+      {chooMode && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, rgba(255, 46, 147, 0.15) 0%, rgba(255, 90, 118, 0.05) 100%)',
+            border: '1px dashed rgba(255, 46, 147, 0.4)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-4) var(--space-5)',
+            marginBottom: 'var(--space-5)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            boxShadow: '0 4px 15px rgba(255, 46, 147, 0.1)',
+          }}
+        >
+          <span className="choo-pulse" style={{ fontSize: 'var(--text-2xl)' }}>🎉</span>
+          <div>
+            <h3 style={{ fontWeight: 700, color: '#FF2E93', fontSize: 'var(--text-base)' }}>יום הולדת שמח לצ'ו אהובתי! 🎂❤️</h3>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+              ספר המתכונים המיוחד שלך מופעל כעת במצב יום הולדת חגיגי.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Page header */}
       <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-4)' }}>
         <div>

@@ -4,7 +4,7 @@
 // Recipe Book — Sidebar Component
 // ============================================
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BookOpen, Heart, Layers, Plus, Settings, ChefHat } from 'lucide-react';
@@ -33,10 +33,34 @@ export default function Sidebar({
   onShowAll,
 }: SidebarProps) {
   const { categories } = useCategories();
-  const { t, locale } = useApp();
+  const { t, locale, chooMode, setChooMode, setShowChooGreeting } = useApp();
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  const [logoClicks, setLogoClicks] = useState(0);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleLogoClick = () => {
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+
+    const nextClicks = logoClicks + 1;
+    if (nextClicks >= 5) {
+      setLogoClicks(0);
+      const nextMode = !chooMode;
+      setChooMode(nextMode);
+      if (nextMode) {
+        setShowChooGreeting(true);
+      }
+    } else {
+      setLogoClicks(nextClicks);
+      clickTimeoutRef.current = setTimeout(() => {
+        setLogoClicks(0);
+      }, 3000);
+    }
+  };
 
   const handleNavigate = (action: () => void) => {
     action();
@@ -49,9 +73,20 @@ export default function Sidebar({
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       {/* Logo */}
-      <div className="sidebar-header">
-        <BookOpen size={24} style={{ color: 'var(--color-primary)' }} />
-        <span className="sidebar-logo">{t.appName}</span>
+      <div
+        className="sidebar-header"
+        onClick={handleLogoClick}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        title={chooMode ? "צ'ו מופעל! ❤️" : undefined}
+      >
+        {chooMode ? (
+          <span className="choo-pulse" style={{ fontSize: 'var(--text-2xl)' }}>🎂</span>
+        ) : (
+          <BookOpen size={24} style={{ color: 'var(--color-primary)' }} />
+        )}
+        <span className="sidebar-logo">
+          {chooMode ? "צ'ו Book 🎂" : t.appName}
+        </span>
       </div>
 
       {/* Quick Filters */}
