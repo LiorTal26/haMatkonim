@@ -84,8 +84,11 @@ export default function Sidebar({
         ) : (
           <BookOpen size={24} style={{ color: 'var(--color-primary)' }} />
         )}
-        <span className="sidebar-logo">
-          {chooMode ? "צ'ו Book 🎂" : t.appName}
+        <span
+          className="sidebar-logo"
+          style={chooMode ? { fontSize: '1.02rem', whiteSpace: 'nowrap' } : undefined}
+        >
+          {chooMode ? (locale === 'he' ? "ספר המתכונים של צ'ו 🎂" : "Choo's Recipe Book 🎂") : t.appName}
         </span>
       </div>
 

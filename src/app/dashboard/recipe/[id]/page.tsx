@@ -47,6 +47,55 @@ export default function RecipeDetailPage() {
 
   // Fetch recipe from Supabase if not found in list (fallback)
   useEffect(() => {
+    if (recipeId === 'choo-secret-recipe') {
+      const secret = {
+        id: 'choo-secret-recipe',
+        user_id: 'system',
+        category_id: 'choo-love-category',
+        title: locale === 'he' ? "המתכון הסודי לאושר של צ'ו" : "Choo's Secret Recipe for Happiness",
+        description: locale === 'he' 
+          ? "המתכון הכי חשוב בספר - איך להכין את המשפחה והחיים הכי מאושרים בעולם" 
+          : "The most important recipe in the book - how to build the happiest life and family in the world",
+        ingredients: [
+          { quantity: 1, unit: 'custom', name: locale === 'he' ? "טון של אהבה" : "Ton of love" },
+          { quantity: null, unit: 'custom', name: locale === 'he' ? "חיבוקים חמים ללא הגבלה" : "Unlimited warm hugs" },
+          { quantity: null, unit: 'custom', name: locale === 'he' ? "חיוכים כל בוקר" : "Daily morning smiles" },
+          { quantity: 1, unit: 'pinch', name: locale === 'he' ? "קמצוץ סבלנות לבעל" : "Pinch of patience for Lior" },
+          { quantity: null, unit: 'to_taste', name: locale === 'he' ? "מבט אחד בעיניים" : "A single warm gaze" }
+        ],
+        instructions: locale === 'he' ? [
+          "מערבבים את כל החלומות והתקוות ביחד בקערה גדולה של תמיכה הדדית.",
+          "מוסיפים המון צחוק והרפתקאות משותפות מדי יום.",
+          "אופים בטמפרטורת החדר החמה של הבית למשך כל החיים."
+        ] : [
+          "Mix all dreams and hopes together in a large bowl of mutual support.",
+          "Add plenty of laughter and shared adventures daily.",
+          "Bake in the warm room temperature of your home for a lifetime."
+        ],
+        image_url: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&q=80&w=800',
+        prep_time_minutes: 5,
+        cook_time_minutes: 0,
+        servings: 2,
+        difficulty: 'easy',
+        is_favorite: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        category: {
+          id: 'choo-love-category',
+          user_id: 'system',
+          name: locale === 'he' ? "אהבה" : "Love",
+          icon: '❤️',
+          color: '#D63384',
+          sort_order: -1,
+          created_at: new Date().toISOString()
+        }
+      };
+      setLocalRecipe(secret as any);
+      setAdjustedServings(2);
+      setLocalLoading(false);
+      return;
+    }
+
     if (listLoading) return;
     const fromList = recipes.find(r => r.id === recipeId);
     if (fromList) {
@@ -74,7 +123,7 @@ export default function RecipeDetailPage() {
 
     fetchRecipe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipeId, listLoading, recipes]);
+  }, [recipeId, listLoading, recipes, locale]);
 
   // Initialize servings count when recipe is resolved
   useEffect(() => {
@@ -98,6 +147,10 @@ export default function RecipeDetailPage() {
 
   const handleToggleFavorite = async () => {
     if (!recipe) return;
+    if (recipe.id === 'choo-secret-recipe') {
+      toast.success(locale === 'he' ? 'המתכון הזה תמיד במועדפים! ❤️' : 'This recipe is always in favorites! ❤️');
+      return;
+    }
     try {
       await toggleFavorite(recipe.id); // updates shared list
     } catch (err: unknown) {
@@ -108,6 +161,11 @@ export default function RecipeDetailPage() {
 
   const handleDelete = async () => {
     if (!recipe) return;
+    if (recipe.id === 'choo-secret-recipe') {
+      toast.error(locale === 'he' ? 'אי אפשר למחוק אהבת אמת! ❤️' : 'True love cannot be deleted! ❤️');
+      setShowDeleteConfirm(false);
+      return;
+    }
     try {
       await deleteRecipe(recipe.id);
       toast.success(t.deleteRecipe + ' ✓');
@@ -183,7 +241,13 @@ export default function RecipeDetailPage() {
           </button>
           <button
             className="btn btn-ghost btn-icon"
-            onClick={() => router.push(`/dashboard/recipe/${recipe.id}/edit`)}
+            onClick={() => {
+              if (recipe.id === 'choo-secret-recipe') {
+                toast.error(locale === 'he' ? 'אי אפשר לערוך שלמות! ❤️' : 'Perfection cannot be edited! ❤️');
+              } else {
+                router.push(`/dashboard/recipe/${recipe.id}/edit`);
+              }
+            }}
             title={t.edit}
           >
             <Edit size={20} />

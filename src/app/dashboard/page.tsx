@@ -76,7 +76,7 @@ export default function DashboardPage() {
   } = useDashboard();
 
   const { recipes, loading } = useRecipes();
-  const { t, chooMode } = useApp();
+  const { t, locale, chooMode } = useApp();
   const router = useRouter();
 
   // Apply client-side category / search / favorites filtering then sort
@@ -108,8 +108,61 @@ export default function DashboardPage() {
     // Sort
     result = sortRecipes(result, sortBy);
 
+    if (chooMode) {
+      const secret = {
+        id: 'choo-secret-recipe',
+        user_id: 'system',
+        category_id: 'choo-love-category',
+        title: locale === 'he' ? "המתכון הסודי לאושר של צ'ו" : "Choo's Secret Recipe for Happiness",
+        description: locale === 'he' 
+          ? "המתכון הכי חשוב בספר - איך להכין את המשפחה והחיים הכי מאושרים בעולם" 
+          : "The most important recipe in the book - how to build the happiest life and family in the world",
+        ingredients: [
+          { quantity: 1, unit: 'custom', name: locale === 'he' ? "טון של אהבה" : "Ton of love" },
+          { quantity: null, unit: 'custom', name: locale === 'he' ? "חיבוקים חמים ללא הגבלה" : "Unlimited warm hugs" },
+          { quantity: null, unit: 'custom', name: locale === 'he' ? "חיוכים כל בוקר" : "Daily morning smiles" },
+          { quantity: 1, unit: 'pinch', name: locale === 'he' ? "קמצוץ סבלנות לבעל" : "Pinch of patience for Lior" },
+          { quantity: null, unit: 'to_taste', name: locale === 'he' ? "מבט אחד בעיניים" : "A single warm gaze" }
+        ],
+        instructions: locale === 'he' ? [
+          "מערבבים את כל החלומות והתקוות ביחד בקערה גדולה של תמיכה הדדית.",
+          "מוסיפים המון צחוק והרפתקאות משותפות מדי יום.",
+          "אופים בטמפרטורת החדר החמה של הבית למשך כל החיים."
+        ] : [
+          "Mix all dreams and hopes together in a large bowl of mutual support.",
+          "Add plenty of laughter and shared adventures daily.",
+          "Bake in the warm room temperature of your home for a lifetime."
+        ],
+        image_url: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&q=80&w=800',
+        prep_time_minutes: 5,
+        cook_time_minutes: 0,
+        servings: 2,
+        difficulty: 'easy',
+        is_favorite: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        category: {
+          id: 'choo-love-category',
+          user_id: 'system',
+          name: locale === 'he' ? "אהבה" : "Love",
+          icon: '❤️',
+          color: '#D63384',
+          sort_order: -1,
+          created_at: new Date().toISOString()
+        }
+      };
+
+      const matchesSearch = !searchQuery || secret.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = !selectedCategoryId || selectedCategoryId === 'choo-love-category';
+      const matchesFavorites = !showFavorites || secret.is_favorite;
+
+      if (matchesSearch && matchesCategory && matchesFavorites) {
+        result = [secret as any, ...result];
+      }
+    }
+
     return result;
-  }, [recipes, selectedCategoryId, showFavorites, searchQuery, filterDifficulty, filterTime, sortBy]);
+  }, [recipes, selectedCategoryId, showFavorites, searchQuery, filterDifficulty, filterTime, sortBy, locale, chooMode]);
 
   return (
     <>

@@ -165,14 +165,56 @@
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
 }
 
-/* ─── Choo Mode Rose Theme ─── */
+/* ─── Choo Mode Rose/Lavender Theme ─── */
 [data-choo-mode="true"] {
-  --color-primary: #FF2E93;
-  --color-primary-hover: #FF60B2;
-  --color-primary-subtle: rgba(255, 46, 147, 0.12);
-  --color-error: #FF2E93;
-  --color-error-subtle: rgba(255, 46, 147, 0.12);
-  --shadow-glow-primary: 0 0 20px rgba(255, 46, 147, 0.35);
+  /* Royal Lavender Purple & Rose Gold */
+  --color-primary: #D63384; /* Deep vibrant rose/magenta */
+  --color-primary-hover: #FD7E14; /* Warm Gold tint on hover */
+  --color-primary-subtle: rgba(214, 51, 132, 0.12);
+  --color-accent: #B197FC; /* Soft lavender */
+  --color-accent-hover: #D0BFFF;
+  --color-accent-subtle: rgba(177, 151, 252, 0.12);
+  
+  --color-secondary: #E5A93B; /* Rose Gold / Gold */
+  --color-secondary-hover: #F0B85D;
+  --color-secondary-subtle: rgba(229, 169, 59, 0.12);
+
+  --color-error: #D63384;
+  --color-error-subtle: rgba(214, 51, 132, 0.12);
+
+  /* Deep Royal Lavender Velvet Background */
+  --color-bg: #120E1E;
+  --color-bg-gradient: linear-gradient(135deg, #120E1E 0%, #201026 50%, #150A26 100%);
+  --color-surface: #1E172E;
+  --color-surface-hover: #261D3A;
+  --color-surface-elevated: #2D2245;
+  --color-surface-glass: rgba(30, 23, 46, 0.75);
+  
+  /* Glowing border colors */
+  --color-border: rgba(214, 51, 132, 0.2);
+  --color-border-hover: rgba(214, 51, 132, 0.35);
+
+  --shadow-glow-primary: 0 0 20px rgba(214, 51, 132, 0.35);
+}
+
+/* Light Theme in Choo Mode (Pastel Pink & Soft Lavender) */
+[data-theme="light"][data-choo-mode="true"] {
+  --color-bg: #FFF3F6;
+  --color-bg-gradient: linear-gradient(135deg, #FFF3F6 0%, #FFF0F5 50%, #F5E3EC 100%);
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #FFF8FA;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-glass: rgba(255, 255, 255, 0.85);
+  --color-border: rgba(214, 51, 132, 0.15);
+  --color-border-hover: rgba(214, 51, 132, 0.28);
+  
+  --color-text: #3D082A;
+  --color-text-secondary: #7A4F6A;
+  --color-text-muted: #A37F96;
+
+  --color-primary: #D63384;
+  --color-primary-hover: #FD7E14;
+  --color-primary-subtle: rgba(214, 51, 132, 0.12);
 }
 
 @keyframes heartPulse {
