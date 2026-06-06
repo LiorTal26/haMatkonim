@@ -7,7 +7,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, Heart, Layers, Plus, Settings, ChefHat } from 'lucide-react';
+import { BookOpen, Heart, Layers, Plus, Settings, ChefHat, Globe, Sun, Moon } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useApp } from '@/components/providers/AppProvider';
 import CategoryForm from '@/components/categories/CategoryForm';
@@ -33,7 +33,7 @@ export default function Sidebar({
   onShowAll,
 }: SidebarProps) {
   const { categories } = useCategories();
-  const { t, locale, chooMode, setChooMode, setShowChooGreeting } = useApp();
+  const { t, locale, setLocale, theme, toggleTheme, chooMode, setChooMode, setShowChooGreeting } = useApp();
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -158,13 +158,41 @@ export default function Sidebar({
       </div>
 
       {/* Footer */}
-      <div className="sidebar-footer">
+      <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
         <Link href="/dashboard/categories" className="category-card" onClick={onClose}>
           <div className="category-card-icon" style={{ background: 'var(--color-surface)' }}>
             <Settings size={18} style={{ color: 'var(--color-text-muted)' }} />
           </div>
           <span className="category-card-name">{t.manageCategories}</span>
         </Link>
+
+        <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-1)' }}>
+          {/* Language Toggle */}
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => {
+              setLocale(locale === 'he' ? 'en' : 'he');
+              onClose();
+            }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: 'var(--text-xs)' }}
+          >
+            <Globe size={14} />
+            <span>{locale === 'he' ? 'English' : 'עברית'}</span>
+          </button>
+
+          {/* Theme Toggle */}
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => {
+              toggleTheme();
+              onClose();
+            }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: 'var(--text-xs)' }}
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+            <span>{theme === 'dark' ? t.lightMode : t.darkMode}</span>
+          </button>
+        </div>
       </div>
 
       {/* Category Form Modal */}

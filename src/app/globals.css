@@ -2326,6 +2326,14 @@ a:hover {
     gap: var(--space-4);
   }
 
+  .landing-nav {
+    padding: var(--space-3) var(--space-4) !important;
+  }
+
+  .landing-nav-actions {
+    gap: var(--space-2) !important;
+  }
+
   .landing-hero-title {
     font-size: var(--text-3xl);
   }
@@ -2382,6 +2390,21 @@ a:hover {
 
   .emoji-picker-grid {
     grid-template-columns: repeat(7, 1fr);
+  }
+
+  .landing-nav-logo {
+    display: none !important;
+  }
+
+  .landing-nav-actions {
+    gap: 6px !important;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .landing-nav-actions .btn {
+    padding: var(--space-2) var(--space-3) !important;
+    font-size: var(--text-xs) !important;
   }
 }
 

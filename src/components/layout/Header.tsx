@@ -57,17 +57,17 @@ export default function Header({ onMenuClick, searchQuery, onSearchChange }: Hea
       <div className="flex items-center gap-2">
         {/* Add Recipe */}
         <button
-          className="btn btn-primary btn-sm"
+          className="btn btn-primary btn-sm hide-mobile"
           onClick={() => router.push('/dashboard/recipe/new')}
           id="add-recipe-btn"
         >
           <Plus size={16} />
-          <span className="hide-mobile">{t.newRecipe}</span>
+          <span>{t.newRecipe}</span>
         </button>
 
         {/* Language Toggle */}
         <button
-          className="btn btn-ghost btn-icon"
+          className="btn btn-ghost btn-icon hide-mobile"
           onClick={() => setLocale(locale === 'he' ? 'en' : 'he')}
           title={locale === 'he' ? 'English' : 'עברית'}
           id="language-toggle-btn"
@@ -77,7 +77,7 @@ export default function Header({ onMenuClick, searchQuery, onSearchChange }: Hea
 
         {/* Theme Toggle */}
         <button
-          className="btn btn-ghost btn-icon"
+          className="btn btn-ghost btn-icon hide-mobile"
           onClick={toggleTheme}
           title={theme === 'dark' ? t.lightMode : t.darkMode}
           id="theme-toggle-btn"
@@ -123,7 +123,7 @@ export default function Header({ onMenuClick, searchQuery, onSearchChange }: Hea
 
       <style jsx>{`
         @media (max-width: 768px) {
-          .hide-mobile { display: none; }
+          .hide-mobile { display: none !important; }
           #menu-toggle-btn { display: flex !important; }
         }
       `}</style>
