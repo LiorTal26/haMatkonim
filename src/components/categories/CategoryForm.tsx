@@ -10,6 +10,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useApp } from '@/components/providers/AppProvider';
 import { useToast } from '@/components/providers/ToastProvider';
 import { Category, CATEGORY_EMOJIS, CATEGORY_COLORS } from '@/types';
+import { getCategoryName } from '@/lib/utils';
 
 interface CategoryFormProps {
   category?: Category;
@@ -17,27 +18,50 @@ interface CategoryFormProps {
 }
 
 export default function CategoryForm({ category, onClose }: CategoryFormProps) {
-  const [name, setName] = useState(category?.name || '');
+  const [hebrewName, setHebrewName] = useState(() => {
+    if (!category?.name) return '';
+    const separators = ['/', '|'];
+    for (const sep of separators) {
+      if (category.name.includes(sep)) {
+        return category.name.split(sep)[0].trim();
+      }
+    }
+    return category.name;
+  });
+  const [englishName, setEnglishName] = useState(() => {
+    if (!category?.name) return '';
+    const separators = ['/', '|'];
+    for (const sep of separators) {
+      if (category.name.includes(sep)) {
+        return category.name.split(sep)[1].trim();
+      }
+    }
+    return '';
+  });
   const [icon, setIcon] = useState(category?.icon || '🍽️');
   const [color, setColor] = useState(category?.color || '#E94560');
   const [isLoading, setIsLoading] = useState(false);
   const { createCategory, updateCategory } = useCategories();
-  const { t } = useApp();
+  const { t, locale } = useApp();
   const toast = useToast();
 
   const isEdit = !!category;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!hebrewName.trim()) return;
 
     setIsLoading(true);
     try {
+      const finalName = englishName.trim()
+        ? `${hebrewName.trim()} / ${englishName.trim()}`
+        : hebrewName.trim();
+
       if (isEdit) {
-        await updateCategory(category.id, { name, icon, color });
+        await updateCategory(category.id, { name: finalName, icon, color });
         toast.success(t.editCategory + ' ✓');
       } else {
-        await createCategory({ name, icon, color });
+        await createCategory({ name: finalName, icon, color });
         toast.success(t.newCategory + ' ✓');
       }
       onClose();
@@ -62,18 +86,31 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Name */}
-          <div className="input-group" style={{ marginBottom: 'var(--space-5)' }}>
-            <label className="input-label">{t.categoryName}</label>
+          {/* Hebrew Name */}
+          <div className="input-group" style={{ marginBottom: 'var(--space-4)' }}>
+            <label className="input-label">{t.categoryNameHebrew}</label>
             <input
               type="text"
               className="input"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder={t.categoryName}
+              value={hebrewName}
+              onChange={e => setHebrewName(e.target.value)}
+              placeholder="למשל: מאפים"
               required
               autoFocus
-              id="category-name-input"
+              id="category-name-he-input"
+            />
+          </div>
+
+          {/* English Name */}
+          <div className="input-group" style={{ marginBottom: 'var(--space-5)' }}>
+            <label className="input-label">{t.categoryNameEnglish}</label>
+            <input
+              type="text"
+              className="input"
+              value={englishName}
+              onChange={e => setEnglishName(e.target.value)}
+              placeholder="e.g. Baking"
+              id="category-name-en-input"
             />
           </div>
 
@@ -134,7 +171,12 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
             >
               {icon}
             </div>
-            <span style={{ fontWeight: 600 }}>{name || t.categoryName}</span>
+             <span style={{ fontWeight: 600 }}>
+              {getCategoryName(
+                englishName.trim() ? `${hebrewName.trim()} / ${englishName.trim()}` : hebrewName.trim(),
+                locale
+              ) || t.categoryName}
+            </span>
           </div>
 
           {/* Actions */}
@@ -142,10 +184,10 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               {t.cancel}
             </button>
-            <button
+             <button
               type="submit"
               className="btn btn-primary"
-              disabled={isLoading || !name.trim()}
+              disabled={isLoading || !hebrewName.trim()}
               id="category-submit-btn"
             >
               {isLoading ? <span className="spinner" /> : t.save}

@@ -11,6 +11,7 @@ import { BookOpen, Heart, Layers, Plus, Settings, ChefHat } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useApp } from '@/components/providers/AppProvider';
 import CategoryForm from '@/components/categories/CategoryForm';
+import { getCategoryName } from '@/lib/utils';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export default function Sidebar({
   onShowAll,
 }: SidebarProps) {
   const { categories } = useCategories();
-  const { t } = useApp();
+  const { t, locale } = useApp();
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function Sidebar({
               >
                 {category.icon}
               </div>
-              <span className="category-card-name">{category.name}</span>
+              <span className="category-card-name">{getCategoryName(category.name, locale)}</span>
             </button>
           ))}
 

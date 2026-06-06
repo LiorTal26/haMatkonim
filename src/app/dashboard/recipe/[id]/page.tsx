@@ -16,7 +16,7 @@ import { useToast } from '@/components/providers/ToastProvider';
 import NoteBoard from '@/components/notes/NoteBoard';
 import ServingScaler from '@/components/recipes/ServingScaler';
 import { Recipe, StructuredIngredient } from '@/types';
-import { formatTime, getDifficultyLabel } from '@/lib/utils';
+import { formatTime, getDifficultyLabel, getCategoryName } from '@/lib/utils';
 import { scaleIngredients, formatIngredient } from '@/lib/scaleIngredients';
 import { motion } from 'framer-motion';
 
@@ -164,7 +164,7 @@ export default function RecipeDetailPage() {
                 color: recipe.category.color,
               }}
             >
-              {recipe.category.icon} {recipe.category.name}
+              {recipe.category.icon} {getCategoryName(recipe.category.name, locale)}
             </span>
           )}
         </div>

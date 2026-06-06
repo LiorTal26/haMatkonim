@@ -13,6 +13,7 @@ import { useToast } from '@/components/providers/ToastProvider';
 import CategoryForm from '@/components/categories/CategoryForm';
 import { Category } from '@/types';
 import { motion } from 'framer-motion';
+import { getCategoryName } from '@/lib/utils';
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -116,7 +117,7 @@ export default function CategoriesPage() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 'var(--text-base)' }}>
-                  {category.name}
+                  {getCategoryName(category.name, locale)}
                 </div>
               </div>
               <div className="flex items-center gap-1">

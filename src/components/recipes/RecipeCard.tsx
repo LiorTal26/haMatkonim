@@ -7,8 +7,9 @@
 import { useRouter } from 'next/navigation';
 import { Heart, Clock, Users } from 'lucide-react';
 import { Recipe } from '@/types';
-import { formatTime } from '@/lib/utils';
+import { formatTime, getCategoryName } from '@/lib/utils';
 import { useRecipes } from '@/hooks/useRecipes';
+import { useApp } from '@/components/providers/AppProvider';
 import { motion } from 'framer-motion';
 
 interface RecipeCardProps {
@@ -19,6 +20,7 @@ interface RecipeCardProps {
 export default function RecipeCard({ recipe, index = 0 }: RecipeCardProps) {
   const router = useRouter();
   const { toggleFavorite } = useRecipes();
+  const { locale } = useApp();
 
   const handleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -71,7 +73,7 @@ export default function RecipeCard({ recipe, index = 0 }: RecipeCardProps) {
               marginBottom: 'var(--space-2)',
             }}
           >
-            {recipe.category.icon} {recipe.category.name}
+            {recipe.category.icon} {getCategoryName(recipe.category.name, locale)}
           </span>
         )}
 

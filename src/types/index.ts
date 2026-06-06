@@ -174,6 +174,8 @@ export interface Translations {
   editCategory: string;
   deleteCategory: string;
   categoryName: string;
+  categoryNameHebrew: string;
+  categoryNameEnglish: string;
   categoryIcon: string;
   categoryColor: string;
   manageCategories: string;

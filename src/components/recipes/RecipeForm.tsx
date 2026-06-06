@@ -15,6 +15,7 @@ import { useApp } from '@/components/providers/AppProvider';
 import { useToast } from '@/components/providers/ToastProvider';
 import { Recipe, RecipeFormData, Difficulty, StructuredIngredient, createEmptyIngredient } from '@/types';
 import IngredientInput from '@/components/recipes/IngredientInput';
+import { getCategoryName } from '@/lib/utils';
 
 interface RecipeFormProps {
   recipe?: Recipe;
@@ -24,7 +25,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
   const router = useRouter();
   const { createRecipe, updateRecipe, uploadImage } = useRecipes();
   const { categories } = useCategories();
-  const { t } = useApp();
+  const { t, locale } = useApp();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -222,7 +223,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
                 <option value="">—</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
+                    {cat.icon} {getCategoryName(cat.name, locale)}
                   </option>
                 ))}
               </select>
