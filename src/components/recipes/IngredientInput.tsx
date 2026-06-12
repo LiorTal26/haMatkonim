@@ -7,6 +7,7 @@
 import { Plus, X, GripVertical } from 'lucide-react';
 import { useApp } from '@/components/providers/AppProvider';
 import { StructuredIngredient, INGREDIENT_UNITS, createEmptyIngredient } from '@/types';
+import { useDragReorder } from '@/hooks/useDragReorder';
 
 interface IngredientInputProps {
   ingredients: StructuredIngredient[];
@@ -15,6 +16,8 @@ interface IngredientInputProps {
 
 export default function IngredientInput({ ingredients, onChange }: IngredientInputProps) {
   const { t, locale } = useApp();
+
+  const drag = useDragReorder(ingredients, onChange);
 
   const updateIngredient = (index: number, field: keyof StructuredIngredient, value: unknown) => {
     const updated = [...ingredients];
@@ -35,6 +38,7 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
     <div className="ingredient-input-container">
       {/* Header row labels */}
       <div className="ingredient-input-header">
+        <div style={{ width: 24 }} /> {/* drag handle spacer */}
         <div className="ingredient-input-col-qty">{t.ingredientQuantity}</div>
         <div className="ingredient-input-col-unit">{t.ingredientUnit}</div>
         <div className="ingredient-input-col-name">{t.ingredientName}</div>
@@ -44,7 +48,40 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
 
       {/* Ingredient rows */}
       {ingredients.map((ingredient, index) => (
-        <div key={index} className="ingredient-input-row">
+        <div
+          key={index}
+          className="ingredient-input-row"
+          draggable
+          onDragStart={() => drag.handleDragStart(index)}
+          onDragOver={(e) => drag.handleDragOver(e, index)}
+          onDrop={() => drag.handleDrop(index)}
+          onDragEnd={drag.handleDragEnd}
+          onTouchStart={(e) => drag.handleTouchStart(index, e)}
+          onTouchMove={drag.handleTouchMove}
+          onTouchEnd={drag.handleTouchEnd}
+          style={{
+            opacity: drag.dragIndex === index ? 0.5 : 1,
+            borderTop: drag.overIndex === index && drag.dragIndex !== index
+              ? '2px solid var(--color-primary)'
+              : '2px solid transparent',
+            transition: 'opacity 0.2s ease',
+          }}
+        >
+          {/* Drag handle */}
+          <span
+            className="drag-handle"
+            style={{
+              cursor: 'grab',
+              color: 'var(--color-text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              flexShrink: 0,
+              touchAction: 'none',
+            }}
+          >
+            <GripVertical size={16} />
+          </span>
+
           {/* Quantity */}
           <div className="ingredient-input-col-qty">
             <input

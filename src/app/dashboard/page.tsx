@@ -64,7 +64,7 @@ function sortRecipes(recipes: Recipe[], sort: SortOption): Recipe[] {
 
 export default function DashboardPage() {
   const {
-    selectedCategoryId,
+    selectedCategoryIds,
     showFavorites,
     searchQuery,
     sortBy,
@@ -73,6 +73,7 @@ export default function DashboardPage() {
     setSortBy,
     setFilterDifficulty,
     setFilterTime,
+    toggleCategoryFilter,
   } = useDashboard();
 
   const { recipes, loading } = useRecipes();
@@ -83,9 +84,16 @@ export default function DashboardPage() {
   const processedRecipes = useMemo(() => {
     let result = recipes;
 
-    // Category
-    if (selectedCategoryId) {
-      result = result.filter(r => r.category_id === selectedCategoryId);
+    // Category filter (multi-select, OR logic)
+    if (selectedCategoryIds.length > 0) {
+      result = result.filter(r => {
+        // Check multi-category join
+        if (r.categories?.length) {
+          return r.categories.some(c => selectedCategoryIds.includes(c.id));
+        }
+        // Fallback to legacy category_id
+        return r.category_id ? selectedCategoryIds.includes(r.category_id) : false;
+      });
     }
 
     // Favorites
@@ -153,7 +161,7 @@ export default function DashboardPage() {
       };
 
       const matchesSearch = !searchQuery || secret.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = !selectedCategoryId || selectedCategoryId === 'choo-love-category';
+      const matchesCategory = selectedCategoryIds.length === 0 || selectedCategoryIds.includes('choo-love-category');
       const matchesFavorites = !showFavorites || secret.is_favorite;
 
       if (matchesSearch && matchesCategory && matchesFavorites) {
@@ -162,7 +170,7 @@ export default function DashboardPage() {
     }
 
     return result;
-  }, [recipes, selectedCategoryId, showFavorites, searchQuery, filterDifficulty, filterTime, sortBy, locale, chooMode]);
+  }, [recipes, selectedCategoryIds, showFavorites, searchQuery, filterDifficulty, filterTime, sortBy, locale, chooMode]);
 
   return (
     <>
@@ -216,6 +224,8 @@ export default function DashboardPage() {
         onSortChange={setSortBy}
         onDifficultyChange={setFilterDifficulty}
         onTimeChange={setFilterTime}
+        selectedCategoryIds={selectedCategoryIds}
+        onToggleCategoryFilter={toggleCategoryFilter}
       />
 
       {/* Loading skeletons */}

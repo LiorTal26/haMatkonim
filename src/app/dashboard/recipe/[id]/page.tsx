@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useApp } from '@/components/providers/AppProvider';
 import { useToast } from '@/components/providers/ToastProvider';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import NoteBoard from '@/components/notes/NoteBoard';
 import ServingScaler from '@/components/recipes/ServingScaler';
 import { Recipe, StructuredIngredient } from '@/types';
@@ -38,6 +39,9 @@ export default function RecipeDetailPage() {
 
   const supabase = createClient();
   const recipeId = params.id as string;
+
+  // Prevent screen from sleeping while viewing recipe
+  useWakeLock(true);
 
   // Resolve recipe (find in context list or use local fallback)
   const recipe = useMemo(() => {
@@ -214,17 +218,21 @@ export default function RecipeDetailPage() {
           <button className="btn btn-ghost btn-icon" onClick={() => router.push('/dashboard')}>
             <ArrowLeft size={20} />
           </button>
-          {recipe.category && (
-            <span
-              className="badge"
-              style={{
-                background: `${recipe.category.color}20`,
-                color: recipe.category.color,
-              }}
-            >
-              {recipe.category.icon} {getCategoryName(recipe.category.name, locale)}
-            </span>
-          )}
+          {(() => {
+            const cats = recipe.categories?.length ? recipe.categories : (recipe.category ? [recipe.category] : []);
+            return cats.map(cat => (
+              <span
+                key={cat.id}
+                className="badge"
+                style={{
+                  background: `${cat.color}20`,
+                  color: cat.color,
+                }}
+              >
+                {cat.icon} {getCategoryName(cat.name, locale)}
+              </span>
+            ));
+          })()}
         </div>
 
         <div className="flex items-center gap-2">

@@ -63,19 +63,41 @@ export default function RecipeCard({ recipe, index = 0 }: RecipeCardProps) {
 
       {/* Body */}
       <div className="recipe-card-body">
-        {/* Category badge */}
-        {recipe.category && (
-          <span
-            className="badge"
-            style={{
-              background: `${recipe.category.color}20`,
-              color: recipe.category.color,
-              marginBottom: 'var(--space-2)',
-            }}
-          >
-            {recipe.category.icon} {getCategoryName(recipe.category.name, locale)}
-          </span>
-        )}
+        {/* Category badges */}
+        {(() => {
+          const cats = recipe.categories?.length ? recipe.categories : (recipe.category ? [recipe.category] : []);
+          if (cats.length === 0) return null;
+          const shown = cats.slice(0, 2);
+          const remaining = cats.length - shown.length;
+          return (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: 'var(--space-2)' }}>
+              {shown.map(cat => (
+                <span
+                  key={cat.id}
+                  className="badge"
+                  style={{
+                    background: `${cat.color}20`,
+                    color: cat.color,
+                  }}
+                >
+                  {cat.icon} {getCategoryName(cat.name, locale)}
+                </span>
+              ))}
+              {remaining > 0 && (
+                <span
+                  className="badge"
+                  style={{
+                    background: 'var(--color-surface)',
+                    color: 'var(--color-text-muted)',
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  +{remaining}
+                </span>
+              )}
+            </div>
+          );
+        })()}
 
         <h3 className="recipe-card-title">{recipe.title}</h3>
 

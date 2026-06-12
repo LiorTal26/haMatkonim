@@ -4,9 +4,11 @@
 // Recipe Book — Filter Bar Component
 // ============================================
 
-import { ArrowDownAZ, ArrowUpAZ, Clock, ChefHat, SlidersHorizontal } from 'lucide-react';
+import { ArrowDownAZ, Clock, ChefHat, SlidersHorizontal, Tag } from 'lucide-react';
 import { useApp } from '@/components/providers/AppProvider';
-import { SortOption, DifficultyFilter, TimeFilter } from '@/types';
+import { useCategories } from '@/hooks/useCategories';
+import { SortOption, DifficultyFilter, TimeFilter, Category } from '@/types';
+import { getCategoryName } from '@/lib/utils';
 
 interface FilterBarProps {
   sortBy: SortOption;
@@ -15,6 +17,9 @@ interface FilterBarProps {
   onSortChange: (sort: SortOption) => void;
   onDifficultyChange: (d: DifficultyFilter) => void;
   onTimeChange: (t: TimeFilter) => void;
+  // Multi-category filter
+  selectedCategoryIds?: string[];
+  onToggleCategoryFilter?: (id: string) => void;
 }
 
 export default function FilterBar({
@@ -24,8 +29,11 @@ export default function FilterBar({
   onSortChange,
   onDifficultyChange,
   onTimeChange,
+  selectedCategoryIds = [],
+  onToggleCategoryFilter,
 }: FilterBarProps) {
-  const { t } = useApp();
+  const { t, locale } = useApp();
+  const { categories } = useCategories();
 
   const sortOptions: { value: SortOption; label: string }[] = [
     { value: 'newest', label: t.newest },
@@ -50,7 +58,7 @@ export default function FilterBar({
     { value: 'over60', label: t.over60 },
   ];
 
-  const hasActiveFilters = filterDifficulty !== 'all' || filterTime !== 'all';
+  const hasActiveFilters = filterDifficulty !== 'all' || filterTime !== 'all' || selectedCategoryIds.length > 0;
 
   return (
     <div className="filter-bar">
@@ -73,6 +81,33 @@ export default function FilterBar({
           ))}
         </select>
       </div>
+
+      {/* Category chips */}
+      {categories.length > 0 && onToggleCategoryFilter && (
+        <div className="filter-group">
+          <label className="filter-label">
+            <Tag size={14} />
+            {t.categories}
+          </label>
+          <div className="filter-chips">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                className={`filter-chip ${selectedCategoryIds.includes(cat.id) ? 'active' : ''}`}
+                onClick={() => onToggleCategoryFilter(cat.id)}
+                style={selectedCategoryIds.includes(cat.id) ? {
+                  background: `${cat.color}25`,
+                  borderColor: cat.color,
+                  color: cat.color,
+                } : undefined}
+              >
+                <span>{cat.icon}</span>
+                {getCategoryName(cat.name, locale)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Difficulty chips */}
       <div className="filter-group">
@@ -120,6 +155,10 @@ export default function FilterBar({
           onClick={() => {
             onDifficultyChange('all');
             onTimeChange('all');
+            if (onToggleCategoryFilter) {
+              // Clear all category filters by toggling each active one off
+              selectedCategoryIds.forEach(id => onToggleCategoryFilter(id));
+            }
           }}
         >
           <SlidersHorizontal size={14} />

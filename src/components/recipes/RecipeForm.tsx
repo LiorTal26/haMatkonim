@@ -7,14 +7,16 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Plus, X, Clock, Users, ChefHat, Image as ImageIcon,
+  ArrowLeft, Plus, X, Clock, Users, ChefHat, Image as ImageIcon, GripVertical,
 } from 'lucide-react';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useCategories } from '@/hooks/useCategories';
 import { useApp } from '@/components/providers/AppProvider';
 import { useToast } from '@/components/providers/ToastProvider';
+import { useDragReorder } from '@/hooks/useDragReorder';
 import { Recipe, RecipeFormData, Difficulty, StructuredIngredient, createEmptyIngredient } from '@/types';
 import IngredientInput from '@/components/recipes/IngredientInput';
+import CategoryForm from '@/components/categories/CategoryForm';
 import { getCategoryName } from '@/lib/utils';
 
 interface RecipeFormProps {
@@ -31,10 +33,21 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(recipe?.image_url || null);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+
+  // Resolve initial category_ids from recipe
+  const getInitialCategoryIds = (): string[] => {
+    if (!recipe) return [];
+    if (recipe.categories?.length) return recipe.categories.map(c => c.id);
+    if (recipe.recipe_categories?.length) return recipe.recipe_categories.map(rc => rc.category.id);
+    if (recipe.category_id) return [recipe.category_id];
+    return [];
+  };
+
   const [formData, setFormData] = useState<RecipeFormData>({
     title: recipe?.title || '',
     description: recipe?.description || '',
-    category_id: recipe?.category_id || '',
+    category_ids: getInitialCategoryIds(),
     ingredients: recipe?.ingredients?.length
       ? recipe.ingredients.map(ing => {
           // Already a proper object
@@ -67,6 +80,16 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
+  // Category toggle
+  const toggleCategory = (categoryId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      category_ids: prev.category_ids.includes(categoryId)
+        ? prev.category_ids.filter(id => id !== categoryId)
+        : [...prev.category_ids, categoryId],
+    }));
+  };
+
   // Instructions list helpers
   const addInstruction = () => {
     setFormData(prev => ({ ...prev, instructions: [...prev.instructions, ''] }));
@@ -86,6 +109,12 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
       return { ...prev, instructions: updated.length ? updated : [''] };
     });
   };
+
+  // Drag & drop for instructions
+  const instructionDrag = useDragReorder(
+    formData.instructions,
+    (newInstructions) => updateField('instructions', newInstructions),
+  );
 
   // Image upload
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,39 +238,72 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
           </div>
         </div>
 
-        {/* Category & Difficulty */}
+        {/* Categories (Multi-select chips) & Difficulty */}
         <div className="form-section">
-          <div className="form-row">
-            <div className="input-group">
-              <label className="input-label">{t.categories}</label>
-              <select
-                className="input select"
-                value={formData.category_id}
-                onChange={e => updateField('category_id', e.target.value)}
-                id="recipe-category-select"
-              >
-                <option value="">—</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>
+          <div className="input-group" style={{ marginBottom: 'var(--space-4)' }}>
+            <label className="input-label">{t.categories}</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {categories.map(cat => {
+                const isSelected = formData.category_ids.includes(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => toggleCategory(cat.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      borderRadius: 'var(--radius-full)',
+                      border: `2px solid ${isSelected ? cat.color : 'var(--color-border)'}`,
+                      background: isSelected ? `${cat.color}20` : 'transparent',
+                      color: isSelected ? cat.color : 'var(--color-text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: isSelected ? 600 : 400,
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
                     {cat.icon} {getCategoryName(cat.name, locale)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="input-group">
-              <label className="input-label">{t.difficulty}</label>
-              <select
-                className="input select"
-                value={formData.difficulty}
-                onChange={e => updateField('difficulty', e.target.value as Difficulty)}
-                id="recipe-difficulty-select"
+                  </button>
+                );
+              })}
+              {/* Add new category button */}
+              <button
+                type="button"
+                onClick={() => setShowCategoryForm(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-full)',
+                  border: '2px dashed var(--color-border)',
+                  background: 'transparent',
+                  color: 'var(--color-text-muted)',
+                  cursor: 'pointer',
+                  fontSize: 'var(--text-sm)',
+                  transition: 'all 0.2s ease',
+                }}
               >
-                <option value="easy">🟢 {t.easy}</option>
-                <option value="medium">🟡 {t.medium}</option>
-                <option value="hard">🔴 {t.hard}</option>
-              </select>
+                <Plus size={14} /> {t.newCategory}
+              </button>
             </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">{t.difficulty}</label>
+            <select
+              className="input select"
+              value={formData.difficulty}
+              onChange={e => updateField('difficulty', e.target.value as Difficulty)}
+              id="recipe-difficulty-select"
+            >
+              <option value="easy">🟢 {t.easy}</option>
+              <option value="medium">🟡 {t.medium}</option>
+              <option value="hard">🔴 {t.hard}</option>
+            </select>
           </div>
         </div>
 
@@ -307,12 +369,44 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
           />
         </div>
 
-        {/* Instructions */}
+        {/* Instructions with Drag & Drop */}
         <div className="form-section">
           <h3 className="form-section-title">📋 {t.instructions}</h3>
           <div className="dynamic-list">
             {formData.instructions.map((instruction, index) => (
-              <div key={index} className="dynamic-list-item">
+              <div
+                key={index}
+                className="dynamic-list-item"
+                draggable
+                onDragStart={() => instructionDrag.handleDragStart(index)}
+                onDragOver={(e) => instructionDrag.handleDragOver(e, index)}
+                onDrop={() => instructionDrag.handleDrop(index)}
+                onDragEnd={instructionDrag.handleDragEnd}
+                onTouchStart={(e) => instructionDrag.handleTouchStart(index, e)}
+                onTouchMove={instructionDrag.handleTouchMove}
+                onTouchEnd={instructionDrag.handleTouchEnd}
+                style={{
+                  opacity: instructionDrag.dragIndex === index ? 0.5 : 1,
+                  borderTop: instructionDrag.overIndex === index && instructionDrag.dragIndex !== index
+                    ? '2px solid var(--color-primary)'
+                    : '2px solid transparent',
+                  transition: 'opacity 0.2s ease',
+                }}
+              >
+                {/* Drag handle */}
+                <span
+                  className="drag-handle"
+                  style={{
+                    cursor: 'grab',
+                    color: 'var(--color-text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexShrink: 0,
+                    touchAction: 'none',
+                  }}
+                >
+                  <GripVertical size={16} />
+                </span>
                 <span
                   style={{
                     width: 28,
@@ -375,6 +469,11 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
           </button>
         </div>
       </form>
+
+      {/* Inline Category Form Modal */}
+      {showCategoryForm && (
+        <CategoryForm onClose={() => setShowCategoryForm(false)} />
+      )}
     </div>
   );
 }

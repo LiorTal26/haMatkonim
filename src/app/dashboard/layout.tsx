@@ -69,13 +69,14 @@ export function useCategoriesContext() {
 // ─── Dashboard UI Context ────────────────────────────────────────────────────
 
 interface DashboardContextType {
-  selectedCategoryId: string | null;
+  selectedCategoryIds: string[];
   showFavorites: boolean;
   searchQuery: string;
   sortBy: SortOption;
   filterDifficulty: DifficultyFilter;
   filterTime: TimeFilter;
-  setSelectedCategoryId: (id: string | null) => void;
+  setSelectedCategoryIds: (ids: string[]) => void;
+  toggleCategoryFilter: (id: string) => void;
   setShowFavorites: (fav: boolean) => void;
   setSearchQuery: (q: string) => void;
   setSortBy: (sort: SortOption) => void;
@@ -84,13 +85,14 @@ interface DashboardContextType {
 }
 
 const DashboardContext = createContext<DashboardContextType>({
-  selectedCategoryId: null,
+  selectedCategoryIds: [],
   showFavorites: false,
   searchQuery: '',
   sortBy: 'newest',
   filterDifficulty: 'all',
   filterTime: 'all',
-  setSelectedCategoryId: () => {},
+  setSelectedCategoryIds: () => {},
+  toggleCategoryFilter: () => {},
   setShowFavorites: () => {},
   setSearchQuery: () => {},
   setSortBy: () => {},
@@ -112,12 +114,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ── Dashboard UI state ──
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterDifficulty, setFilterDifficulty] = useState<DifficultyFilter>('all');
   const [filterTime, setFilterTime] = useState<TimeFilter>('all');
+
+  const toggleCategoryFilter = useCallback((id: string) => {
+    setSelectedCategoryIds(prev =>
+      prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
+    );
+    setShowFavorites(false);
+  }, []);
 
   // ── Recipes state (single source of truth) ──
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -131,11 +140,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setLoading(true);
     const { data, error } = await supabase
       .from('recipes')
-      .select('*, category:categories(*)')
+      .select('*, category:categories(*), recipe_categories(category:categories(*))')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setRecipes(data);
+      // Normalize: populate categories[] from recipe_categories join
+      const normalized = data.map((r: Recipe) => ({
+        ...r,
+        categories: r.recipe_categories?.map((rc: { category: Category }) => rc.category).filter(Boolean) || 
+                    (r.category ? [r.category] : []),
+      }));
+      setRecipes(normalized);
     }
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,13 +188,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Use first category_id for legacy column
+    const primaryCategoryId = formData.category_ids?.[0] || null;
+
     const { data, error } = await supabase
       .from('recipes')
       .insert({
         user_id: user.id,
         title: formData.title,
         description: formData.description || null,
-        category_id: formData.category_id || null,
+        category_id: primaryCategoryId,
         ingredients: formData.ingredients.filter(i => (typeof i === 'string' ? i : i.name || '').trim()),
         instructions: formData.instructions.filter(i => (i || '').trim()),
         image_url: formData.image_url || null,
@@ -192,13 +210,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .single();
 
     if (error) throw error;
-    setRecipes(prev => [data, ...prev]); // optimistic insert at top
-    return data;
+
+    // Insert multi-category links
+    if (formData.category_ids?.length) {
+      const links = formData.category_ids.map(cid => ({
+        recipe_id: data.id,
+        category_id: cid,
+      }));
+      await supabase.from('recipe_categories').insert(links);
+    }
+
+    // Fetch full recipe with categories
+    const { data: fullRecipe } = await supabase
+      .from('recipes')
+      .select('*, category:categories(*), recipe_categories(category:categories(*))')
+      .eq('id', data.id)
+      .single();
+
+    const normalized = fullRecipe ? {
+      ...fullRecipe,
+      categories: fullRecipe.recipe_categories?.map((rc: { category: Category }) => rc.category).filter(Boolean) || [],
+    } : { ...data, categories: [] };
+
+    setRecipes(prev => [normalized, ...prev]);
+    return normalized;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateRecipe = useCallback(async (id: string, formData: Partial<RecipeFormData>): Promise<Recipe> => {
     const updates: Record<string, unknown> = { ...formData };
+    // Remove category_ids from updates (handled separately)
+    delete updates.category_ids;
     if (formData.ingredients) {
       updates.ingredients = formData.ingredients.filter(i => (typeof i === 'string' ? i : i.name || '').trim());
     }
@@ -215,6 +257,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       updates.servings = Number(formData.servings) || null;
     }
 
+    // Update legacy category_id
+    if (formData.category_ids) {
+      updates.category_id = formData.category_ids[0] || null;
+    }
+
     const { data, error } = await supabase
       .from('recipes')
       .update(updates)
@@ -223,8 +270,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .single();
 
     if (error) throw error;
-    setRecipes(prev => prev.map(r => (r.id === id ? data : r))); // optimistic update
-    return data;
+
+    // Update multi-category links
+    if (formData.category_ids) {
+      // Remove old links
+      await supabase.from('recipe_categories').delete().eq('recipe_id', id);
+      // Insert new links
+      if (formData.category_ids.length > 0) {
+        const links = formData.category_ids.map(cid => ({
+          recipe_id: id,
+          category_id: cid,
+        }));
+        await supabase.from('recipe_categories').insert(links);
+      }
+    }
+
+    // Fetch full recipe with categories
+    const { data: fullRecipe } = await supabase
+      .from('recipes')
+      .select('*, category:categories(*), recipe_categories(category:categories(*))')
+      .eq('id', id)
+      .single();
+
+    const normalized = fullRecipe ? {
+      ...fullRecipe,
+      categories: fullRecipe.recipe_categories?.map((rc: { category: Category }) => rc.category).filter(Boolean) || [],
+    } : { ...data, categories: [] };
+
+    setRecipes(prev => prev.map(r => (r.id === id ? normalized : r)));
+    return normalized;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -341,19 +415,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }), [categories, categoriesLoading, fetchCategories, createCategory, updateCategory, deleteCategory]);
 
   const dashboardValue = useMemo(() => ({
-    selectedCategoryId,
+    selectedCategoryIds,
     showFavorites,
     searchQuery,
     sortBy,
     filterDifficulty,
     filterTime,
-    setSelectedCategoryId,
+    setSelectedCategoryIds,
+    toggleCategoryFilter,
     setShowFavorites,
     setSearchQuery,
     setSortBy,
     setFilterDifficulty,
     setFilterTime,
-  }), [selectedCategoryId, showFavorites, searchQuery, sortBy, filterDifficulty, filterTime]);
+  }), [selectedCategoryIds, showFavorites, searchQuery, sortBy, filterDifficulty, filterTime, toggleCategoryFilter]);
 
   const { showChooGreeting, setShowChooGreeting } = useApp();
 
@@ -374,18 +449,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Sidebar
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
-              selectedCategoryId={selectedCategoryId}
-              onSelectCategory={(id) => {
-                setSelectedCategoryId(id);
-                setShowFavorites(false);
-              }}
+              selectedCategoryIds={selectedCategoryIds}
+              onToggleCategory={toggleCategoryFilter}
               onShowFavorites={() => {
                 setShowFavorites(true);
-                setSelectedCategoryId(null);
+                setSelectedCategoryIds([]);
               }}
               showFavorites={showFavorites}
               onShowAll={() => {
-                setSelectedCategoryId(null);
+                setSelectedCategoryIds([]);
                 setShowFavorites(false);
               }}
             />

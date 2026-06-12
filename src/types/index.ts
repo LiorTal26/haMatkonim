@@ -85,8 +85,11 @@ export interface Recipe {
   is_favorite: boolean;
   created_at: string;
   updated_at: string;
-  // Joined fields
+  // Joined fields (legacy single category)
   category?: Category;
+  // Multi-category support
+  categories?: Category[];
+  recipe_categories?: { category: Category }[];
 }
 
 export interface RecipeNote {
@@ -110,7 +113,7 @@ export interface CategoryFormData {
 export interface RecipeFormData {
   title: string;
   description: string;
-  category_id: string;
+  category_ids: string[];
   ingredients: StructuredIngredient[];
   instructions: string[];
   image_url: string;

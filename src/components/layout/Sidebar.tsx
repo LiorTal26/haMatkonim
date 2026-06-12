@@ -7,7 +7,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, Heart, Layers, Plus, Settings, ChefHat, Globe, Sun, Moon } from 'lucide-react';
+import { BookOpen, Heart, Layers, Plus, Settings, ChefHat, Globe, Sun, Moon, Check } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useApp } from '@/components/providers/AppProvider';
 import CategoryForm from '@/components/categories/CategoryForm';
@@ -16,8 +16,8 @@ import { getCategoryName } from '@/lib/utils';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedCategoryId: string | null;
-  onSelectCategory: (id: string | null) => void;
+  selectedCategoryIds: string[];
+  onToggleCategory: (id: string) => void;
   onShowFavorites: () => void;
   showFavorites: boolean;
   onShowAll: () => void;
@@ -26,8 +26,8 @@ interface SidebarProps {
 export default function Sidebar({
   isOpen,
   onClose,
-  selectedCategoryId,
-  onSelectCategory,
+  selectedCategoryIds,
+  onToggleCategory,
   onShowFavorites,
   showFavorites,
   onShowAll,
@@ -97,7 +97,7 @@ export default function Sidebar({
         <nav className="sidebar-nav">
           <Link
             href="/dashboard"
-            className={`category-card ${!selectedCategoryId && !showFavorites ? 'active' : ''}`}
+            className={`category-card ${selectedCategoryIds.length === 0 && !showFavorites ? 'active' : ''}`}
             onClick={(e) => {
               e.preventDefault();
               handleNavigate(onShowAll);
@@ -125,21 +125,40 @@ export default function Sidebar({
       <div className="sidebar-section" style={{ flex: 1 }}>
         <div className="sidebar-section-title">{t.categories}</div>
         <nav className="sidebar-nav">
-          {categories.map(category => (
-            <button
-              key={category.id}
-              className={`category-card ${selectedCategoryId === category.id ? 'active' : ''}`}
-              onClick={() => handleNavigate(() => onSelectCategory(category.id))}
-            >
-              <div
-                className="category-card-icon"
-                style={{ background: `${category.color}20` }}
+          {categories.map(category => {
+            const isSelected = selectedCategoryIds.includes(category.id);
+            return (
+              <button
+                key={category.id}
+                className={`category-card ${isSelected ? 'active' : ''}`}
+                onClick={() => handleNavigate(() => onToggleCategory(category.id))}
               >
-                {category.icon}
-              </div>
-              <span className="category-card-name">{getCategoryName(category.name, locale)}</span>
-            </button>
-          ))}
+                <div
+                  className="category-card-icon"
+                  style={{ background: `${category.color}20`, position: 'relative' }}
+                >
+                  {category.icon}
+                  {isSelected && (
+                    <span style={{
+                      position: 'absolute',
+                      bottom: -2,
+                      insetInlineEnd: -2,
+                      width: 14,
+                      height: 14,
+                      borderRadius: '50%',
+                      background: 'var(--color-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Check size={9} color="white" strokeWidth={3} />
+                    </span>
+                  )}
+                </div>
+                <span className="category-card-name">{getCategoryName(category.name, locale)}</span>
+              </button>
+            );
+          })}
 
           <button
             className="category-card"

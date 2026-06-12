@@ -1833,7 +1833,7 @@ a:hover {
 
 .ingredient-input-header {
   display: grid;
-  grid-template-columns: 80px 130px 1fr 1fr 36px;
+  grid-template-columns: 24px 80px 130px 1fr 1fr 36px;
   gap: var(--space-2);
   font-size: var(--text-xs);
   font-weight: 600;
@@ -1846,7 +1846,7 @@ a:hover {
 
 .ingredient-input-row {
   display: grid;
-  grid-template-columns: 80px 130px 1fr 1fr 36px;
+  grid-template-columns: 24px 80px 130px 1fr 1fr 36px;
   gap: var(--space-2);
   align-items: center;
   padding: var(--space-1) 0;
@@ -1893,6 +1893,25 @@ a:hover {
 .ingredient-input-col-note,
 .ingredient-input-col-action {
   min-width: 0;
+}
+
+/* ─── Drag Handle ─── */
+.drag-handle {
+  cursor: grab;
+  color: var(--color-text-muted);
+  opacity: 0.4;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+  touch-action: none;
+  user-select: none;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 /* ─── Serving Scaler ─── */

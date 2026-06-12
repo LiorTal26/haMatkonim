@@ -21,7 +21,7 @@ export default function EditRecipePage() {
     const fetchRecipe = async () => {
       const { data, error } = await supabase
         .from('recipes')
-        .select('*, category:categories(*)')
+        .select('*, category:categories(*), recipe_categories(category:categories(*))')
         .eq('id', params.id as string)
         .single();
 
@@ -29,7 +29,13 @@ export default function EditRecipePage() {
         router.push('/dashboard');
         return;
       }
-      setRecipe(data);
+      // Normalize categories from recipe_categories join
+      const normalized = {
+        ...data,
+        categories: data.recipe_categories?.map((rc: { category: any }) => rc.category).filter(Boolean) ||
+                    (data.category ? [data.category] : []),
+      };
+      setRecipe(normalized);
       setLoading(false);
     };
 

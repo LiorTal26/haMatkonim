@@ -20,6 +20,16 @@ export const metadata: Metadata = {
   title: "ספר המתכונים | Recipe Book",
   description: "ספר מתכונים אישי — אספו, ארגנו ושתפו את המתכונים האהובים עליכם",
   keywords: ["recipes", "cookbook", "מתכונים", "ספר מתכונים"],
+  manifest: "/manifest.json",
+  other: {
+    "theme-color": "#E94560",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-192.png",
+  },
 };
 
 export default function RootLayout({

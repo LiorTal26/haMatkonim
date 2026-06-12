@@ -1,0 +1,26 @@
+{
+  "name": "ספר המתכונים | Recipe Book",
+  "short_name": "מתכונים",
+  "description": "ספר מתכונים אישי — אספו, ארגנו ושתפו את המתכונים האהובים עליכם",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0F1117",
+  "theme_color": "#E94560",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
