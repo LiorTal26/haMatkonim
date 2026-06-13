@@ -1,6 +1,6 @@
 {
-  "name": "ספר המתכונים | Recipe Book",
-  "short_name": "מתכונים",
+  "name": "ספר המתכונים",
+  "short_name": "ספר המתכונים",
   "description": "ספר מתכונים אישי — אספו, ארגנו ושתפו את המתכונים האהובים עליכם",
   "start_url": "/",
   "display": "standalone",

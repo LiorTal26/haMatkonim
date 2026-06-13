@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     "theme-color": "#E94560",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "apple-mobile-web-app-title": "ספר המתכונים"
   },
   icons: {
     icon: "/icons/icon-192.png",
