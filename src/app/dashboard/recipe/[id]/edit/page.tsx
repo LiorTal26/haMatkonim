@@ -21,7 +21,7 @@ export default function EditRecipePage() {
     const fetchRecipe = async () => {
       const { data, error } = await supabase
         .from('recipes')
-        .select('*, category:categories(*), recipe_categories(category:categories(*))')
+        .select('*, category:categories!recipes_category_id_fkey(*), recipe_categories(category:categories(*))')
         .eq('id', params.id as string)
         .single();
 

@@ -111,7 +111,7 @@ export default function RecipeDetailPage() {
       setLocalLoading(true);
       const { data, error } = await supabase
         .from('recipes')
-        .select('*, category:categories(*)')
+        .select('*, category:categories!recipes_category_id_fkey(*), recipe_categories(category:categories(*))')
         .eq('id', recipeId)
         .single();
 

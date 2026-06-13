@@ -140,7 +140,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setLoading(true);
     const { data, error } = await supabase
       .from('recipes')
-      .select('*, category:categories(*), recipe_categories(category:categories(*))')
+      .select('*, category:categories!recipes_category_id_fkey(*), recipe_categories(category:categories(*))')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -206,10 +206,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         servings: Number(formData.servings) || null,
         difficulty: formData.difficulty,
       })
-      .select('*, category:categories(*)')
+      .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
     // Insert multi-category links
     if (formData.category_ids?.length) {
@@ -223,7 +225,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Fetch full recipe with categories
     const { data: fullRecipe } = await supabase
       .from('recipes')
-      .select('*, category:categories(*), recipe_categories(category:categories(*))')
+      .select('*, category:categories!recipes_category_id_fkey(*), recipe_categories(category:categories(*))')
       .eq('id', data.id)
       .single();
 
@@ -266,7 +268,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .from('recipes')
       .update(updates)
       .eq('id', id)
-      .select('*, category:categories(*)')
+      .select()
       .single();
 
     if (error) throw error;
@@ -288,7 +290,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Fetch full recipe with categories
     const { data: fullRecipe } = await supabase
       .from('recipes')
-      .select('*, category:categories(*), recipe_categories(category:categories(*))')
+      .select('*, category:categories!recipes_category_id_fkey(*), recipe_categories(category:categories(*))')
       .eq('id', id)
       .single();
 
