@@ -198,7 +198,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         title: formData.title,
         description: formData.description || null,
         category_id: primaryCategoryId,
-        ingredients: formData.ingredients.filter(i => (typeof i === 'string' ? i : i.name || '').trim()),
+        ingredients: formData.ingredients.filter(i => (i.name || '').trim()),
         instructions: formData.instructions.filter(i => (i || '').trim()),
         image_url: formData.image_url || null,
         prep_time_minutes: Number(formData.prep_time_minutes) || null,
@@ -242,7 +242,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Remove category_ids from updates (handled separately)
     delete updates.category_ids;
     if (formData.ingredients) {
-      updates.ingredients = formData.ingredients.filter(i => (typeof i === 'string' ? i : i.name || '').trim());
+      updates.ingredients = formData.ingredients.filter(i => (i.name || '').trim());
     }
     if (formData.instructions) {
       updates.instructions = formData.instructions.filter(i => (i || '').trim());
