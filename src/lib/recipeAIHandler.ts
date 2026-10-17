@@ -10,7 +10,8 @@ interface Dependencies {
 
 const attempts = new Map<string, { count: number; reset: number }>();
 // These models have a free API tier. Never switch to a paid-only fallback.
-export const FREE_RECIPE_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+export const DEFAULT_RECIPE_MODEL = 'gemini-3.5-flash-lite';
+export const FREE_RECIPE_MODELS = [DEFAULT_RECIPE_MODEL, 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 function allowRequest(userId: string): boolean {
   const now = Date.now();
   for (const [id, entry] of attempts) if (entry.reset <= now) attempts.delete(id);
@@ -24,6 +25,9 @@ function allowRequest(userId: string): boolean {
 const messages = {
   auth: ['יש להתחבר לחשבון כדי להשתמש ב־AI.', 'Sign in to use AI.'],
   unavailable: ['שירות ה־AI עדיין לא הופעל. אפשר להמשיך למלא מתכון ידנית.', 'AI is not configured yet. You can still enter recipes manually.'],
+  configuration: ['לא ניתן לאמת את מפתח Gemini. יש לבדוק את הגדרת GEMINI_API_KEY ב־Vercel.', 'Gemini could not authenticate the API key. Check GEMINI_API_KEY in Vercel.'],
+  modelUnavailable: ['מודל ה־AI אינו זמין לפרויקט Google הזה. יש לבדוק את הגדרת GEMINI_RECIPE_MODEL.', 'The AI model is not available for this Google project. Check GEMINI_RECIPE_MODEL.'],
+  quota: ['מכסת הבקשות של Gemini נוצלה או הוגבלה. נסו שוב מאוחר יותר; אין מעבר אוטומטי למסלול בתשלום.', 'Gemini quota has been exhausted or limited. Try again later; there is no automatic upgrade to a paid tier.'],
   invalid: ['בחרו תמונת מתכון תקינה או כתבו בקשה של עד 3,000 תווים.', 'Choose a valid recipe image or enter a request of up to 3,000 characters.'],
   tooLarge: ['התמונה גדולה מדי. בחרו תמונה קטנה יותר.', 'The image is too large. Choose a smaller image.'],
   rate: ['בוצעו יותר מדי בקשות. נסו שוב בעוד כמה דקות.', 'Too many requests. Please try again in a few minutes.'],
@@ -69,7 +73,7 @@ export function createRecipeAIHandlers(deps: Dependencies) {
   return {
     async GET() {
       if (!await getUserId()) return error('auth', 401);
-      return Response.json({ available: Boolean(deps.apiKey()) && FREE_RECIPE_MODELS.includes(deps.model() || 'gemini-2.5-flash') }, { headers: { 'Cache-Control': 'no-store' } });
+      return Response.json({ available: Boolean(deps.apiKey()) && FREE_RECIPE_MODELS.includes(deps.model()?.trim() || DEFAULT_RECIPE_MODEL) }, { headers: { 'Cache-Control': 'no-store' } });
     },
     async POST(request: Request) {
       const userId = await getUserId();
@@ -89,6 +93,8 @@ export function createRecipeAIHandlers(deps: Dependencies) {
       if (mode === 'photo' && !validImage(image)) return error('invalid', 400, locale);
       const apiKey = deps.apiKey();
       if (!apiKey) return error('unavailable', 503, locale);
+      const model = deps.model()?.trim() || DEFAULT_RECIPE_MODEL;
+      if (!FREE_RECIPE_MODELS.includes(model)) return error('modelUnavailable', 503, locale);
       if (!(deps.allowRequest || allowRequest)(userId)) return error('rate', 429, locale);
       const instructions = [
         'You prepare recipe drafts, never save data or take other actions.',
@@ -101,8 +107,6 @@ export function createRecipeAIHandlers(deps: Dependencies) {
           : 'Create a practical, complete recipe that satisfies the user request, including ingredient quantities, servings, times and ordered steps. Mark any assumptions in warnings.',
         'Do not include markdown, external URLs, or HTML. Return only the recipe data.',
       ].join('\n');
-      const model = deps.model() || 'gemini-2.5-flash';
-      if (!FREE_RECIPE_MODELS.includes(model)) return error('unavailable', 503, locale);
       const parts: Record<string, unknown>[] = [{ text: mode === 'photo' ? 'Read the recipe in this image.' : prompt }];
       if (mode === 'photo') {
         const comma = image.indexOf(',');
@@ -114,11 +118,18 @@ export function createRecipeAIHandlers(deps: Dependencies) {
           headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: instructions }] }, contents: [{ role: 'user', parts }],
-            generationConfig: { responseMimeType: 'application/json', responseJsonSchema: recipeDraftSchema, maxOutputTokens: 5000, thinkingConfig: { thinkingBudget: 0 } },
+            generationConfig: model.startsWith('gemini-2.5-')
+              ? { responseMimeType: 'application/json', responseJsonSchema: recipeDraftSchema, maxOutputTokens: 5000, thinkingConfig: { thinkingBudget: 0 } }
+              : { responseFormat: { text: { mimeType: 'APPLICATION_JSON', schema: recipeDraftSchema } }, maxOutputTokens: 5000, thinkingConfig: { thinkingLevel: 'MINIMAL' } },
           }),
           signal: AbortSignal.timeout(45_000),
         });
-        if (!response.ok) return error(response.status === 401 || response.status === 403 ? 'unavailable' : 'provider', response.status === 429 ? 503 : 502, locale);
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) return error('configuration', 503, locale);
+          if (response.status === 404) return error('modelUnavailable', 503, locale);
+          if (response.status === 429) return error('quota', 503, locale);
+          return error('provider', 502, locale);
+        }
         const result: unknown = await response.json();
         if (!isRecord(result)) return error('provider', 502, locale);
         if (isRecord(result.promptFeedback) && result.promptFeedback.blockReason) return error('unreadable', 422, locale);

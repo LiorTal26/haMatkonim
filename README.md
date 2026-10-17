@@ -31,7 +31,10 @@ Create a free API key at https://aistudio.google.com/api-keys using a Free Tier 
 with no billing account linked. Set `GEMINI_API_KEY` in `.env.local` for local use,
 and as a secret environment variable in Vercel for deployment. Never prefix it with
 `NEXT_PUBLIC_` or commit it. Optionally set `GEMINI_RECIPE_MODEL` to
-`gemini-2.5-flash` (default) or `gemini-2.5-flash-lite`. Paid-only models are rejected;
+`gemini-3.5-flash-lite` (default). Google limits Gemini 2.5 access to existing users;
+`gemini-2.5-flash` and `gemini-2.5-flash-lite` remain optional for legacy projects.
+See https://ai.google.dev/gemini-api/docs/deprecations for current availability.
+Paid-only models and floating aliases are rejected;
 there is no fallback to a paid provider. Free-tier limits still apply: exhausted quota
 shows an error and does not cause an upgrade. Restart the dev server, or redeploy
 after changing Vercel environment variables. See `.env.example` for variable names.

@@ -92,12 +92,38 @@ test('rejects cross-origin requests, invalid input and oversized uploads', async
 
 test('text generation uses a schema and a free-tier model without saving recipes', async () => {
   let body: Record<string, unknown> = {};
-  const api = handlers({ fetch: async (url, options) => { assert.equal(url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'); body = JSON.parse(String(options?.body)); return providerResult(); } });
+  const api = handlers({ fetch: async (url, options) => { assert.equal(url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent'); body = JSON.parse(String(options?.body)); return providerResult(); } });
   const response = await api.POST(request({ mode: 'text', prompt: 'פנקייק לארבעה אנשים', locale: 'he' }));
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).draft, draft);
-  assert.equal((body.generationConfig as { responseMimeType: string }).responseMimeType, 'application/json');
-  assert.ok((body.generationConfig as { responseJsonSchema: unknown }).responseJsonSchema);
+  const config = body.generationConfig as { responseFormat: { text: { mimeType: string; schema: unknown } }; thinkingConfig: unknown };
+  assert.equal(config.responseFormat.text.mimeType, 'APPLICATION_JSON');
+  assert.ok(config.responseFormat.text.schema);
+  assert.deepEqual(config.thinkingConfig, { thinkingLevel: 'MINIMAL' });
+});
+
+test('legacy projects can explicitly select Gemini 2.5 with compatible thinking settings', async () => {
+  const api = handlers({ model: () => 'gemini-2.5-flash-lite', fetch: async (url, options) => {
+    assert.equal(url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent');
+    const config = JSON.parse(String(options?.body)).generationConfig;
+    assert.equal(config.responseMimeType, 'application/json');
+    assert.deepEqual(config.thinkingConfig, { thinkingBudget: 0 });
+    return providerResult();
+  } });
+  assert.equal((await api.POST(request({ mode: 'text', prompt: 'pancakes' }))).status, 200);
+});
+
+test('provider quota, authentication and unavailable-model errors are actionable and redacted', async () => {
+  for (const [status, code] of [[401, 'configuration'], [403, 'configuration'], [404, 'modelUnavailable'], [429, 'quota']] as const) {
+    let calls = 0;
+    const api = handlers({ fetch: async () => { calls++; return Response.json({ error: 'private upstream details' }, { status }); } });
+    const response = await api.POST(request({ mode: 'text', prompt: 'pancakes', locale: 'en' }));
+    assert.equal(response.status, 503);
+    const body = await response.json();
+    assert.equal(body.code, code);
+    assert.ok(!JSON.stringify(body).includes('private upstream details'));
+    assert.equal(calls, 1, 'Never retry against a different or paid model');
+  }
 });
 
 test('photo import sends the selected image to the vision model', async () => {
@@ -131,6 +157,12 @@ test('rate limits are enforced before calling the provider', async () => {
 test('paid-only models are rejected without contacting a provider', async () => {
   const response = await handlers({ model: () => 'gemini-2.5-pro', fetch: async () => { throw new Error('Must not call'); } }).POST(request({ mode: 'text', prompt: 'pancakes' }));
   assert.equal(response.status, 503);
+});
+
+test('floating aliases are rejected and readiness uses the same model allowlist', async () => {
+  const api = handlers({ model: () => 'gemini-flash-latest', fetch: async () => { throw new Error('Must not call'); } });
+  assert.deepEqual(await (await api.GET()).json(), { available: false });
+  assert.equal((await api.POST(request({ mode: 'text', prompt: 'pancakes' }))).status, 503);
 });
 
 test('validates model output and preserves unknown quantities for manual review', () => {
