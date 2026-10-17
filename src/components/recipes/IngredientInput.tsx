@@ -5,6 +5,7 @@
 // ============================================
 
 import { Plus, X, GripVertical } from 'lucide-react';
+import { useId } from 'react';
 import { useApp } from '@/components/providers/AppProvider';
 import { StructuredIngredient, INGREDIENT_UNITS, createEmptyIngredient } from '@/types';
 import { useDragReorder } from '@/hooks/useDragReorder';
@@ -16,12 +17,13 @@ interface IngredientInputProps {
 
 export default function IngredientInput({ ingredients, onChange }: IngredientInputProps) {
   const { t, locale } = useApp();
+  const inputId = useId();
 
   const drag = useDragReorder(ingredients, onChange);
 
-  const updateIngredient = (index: number, field: keyof StructuredIngredient, value: unknown) => {
+  const updateIngredient = (index: number, patch: Partial<StructuredIngredient>) => {
     const updated = [...ingredients];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = { ...updated[index], ...patch };
     onChange(updated);
   };
 
@@ -51,14 +53,11 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
         <div
           key={index}
           className="ingredient-input-row"
-          draggable
+          data-reorder-item
           onDragStart={() => drag.handleDragStart(index)}
           onDragOver={(e) => drag.handleDragOver(e, index)}
           onDrop={() => drag.handleDrop(index)}
           onDragEnd={drag.handleDragEnd}
-          onTouchStart={(e) => drag.handleTouchStart(index, e)}
-          onTouchMove={drag.handleTouchMove}
-          onTouchEnd={drag.handleTouchEnd}
           style={{
             opacity: drag.dragIndex === index ? 0.5 : 1,
             borderTop: drag.overIndex === index && drag.dragIndex !== index
@@ -70,6 +69,12 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
           {/* Drag handle */}
           <span
             className="drag-handle"
+            draggable
+            onDragStart={() => drag.handleDragStart(index)}
+            onTouchStart={e => drag.handleTouchStart(index, e)}
+            onTouchMove={drag.handleTouchMove}
+            onTouchEnd={drag.handleTouchEnd}
+            aria-label={locale === 'he' ? 'גרירה לסידור המרכיבים' : 'Drag to reorder ingredients'}
             style={{
               cursor: 'grab',
               color: 'var(--color-text-muted)',
@@ -84,32 +89,36 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
 
           {/* Quantity */}
           <div className="ingredient-input-col-qty">
+            <label className="ingredient-field-label" htmlFor={`${inputId}-${index}-qty`}>{t.ingredientQuantity}</label>
             <input
+              id={`${inputId}-${index}-qty`}
+              aria-label={`${t.ingredientQuantity} ${index + 1}`}
+              inputMode="decimal"
               type="number"
               className="input ingredient-input-qty"
               value={ingredient.quantity ?? ''}
               onChange={e => {
                 const val = e.target.value;
-                updateIngredient(index, 'quantity', val === '' ? null : Number(val));
+                updateIngredient(index, { quantity: val === '' ? null : Number(val) });
               }}
               placeholder="—"
               min="0"
-              step="0.25"
+              step="any"
               disabled={ingredient.unit === 'to_taste'}
             />
           </div>
 
           {/* Unit */}
           <div className="ingredient-input-col-unit">
+            <label className="ingredient-field-label" htmlFor={`${inputId}-${index}-unit`}>{t.ingredientUnit}</label>
             <select
+              id={`${inputId}-${index}-unit`}
+              aria-label={`${t.ingredientUnit} ${index + 1}`}
               className="input select ingredient-input-unit"
               value={ingredient.unit}
               onChange={e => {
-                const unit = e.target.value;
-                updateIngredient(index, 'unit', unit);
-                if (unit === 'to_taste') {
-                  updateIngredient(index, 'quantity', null);
-                }
+                const unit = e.target.value as StructuredIngredient['unit'];
+                updateIngredient(index, { unit, ...(unit === 'to_taste' ? { quantity: null } : {}) });
               }}
             >
               {INGREDIENT_UNITS.map(u => (
@@ -122,22 +131,28 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
 
           {/* Name */}
           <div className="ingredient-input-col-name">
-            <input
-              type="text"
-              className="input"
+            <label className="ingredient-field-label" htmlFor={`${inputId}-${index}-name`}>{t.ingredientName}</label>
+            <textarea
+              id={`${inputId}-${index}-name`}
+              aria-label={`${t.ingredientName} ${index + 1}`}
+              rows={2}
+              className="input ingredient-input-name"
               value={ingredient.name}
-              onChange={e => updateIngredient(index, 'name', e.target.value)}
+              onChange={e => updateIngredient(index, { name: e.target.value })}
               placeholder={`${t.ingredientName}...`}
             />
           </div>
 
           {/* Note */}
           <div className="ingredient-input-col-note">
+            <label className="ingredient-field-label" htmlFor={`${inputId}-${index}-note`}>{t.ingredientNote}</label>
             <input
+              id={`${inputId}-${index}-note`}
+              aria-label={`${t.ingredientNote} ${index + 1}`}
               type="text"
               className="input ingredient-input-note"
               value={ingredient.note || ''}
-              onChange={e => updateIngredient(index, 'note', e.target.value)}
+              onChange={e => updateIngredient(index, { note: e.target.value })}
               placeholder={t.ingredientNotePlaceholder}
             />
           </div>
@@ -148,6 +163,7 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
               <button
                 type="button"
                 className="dynamic-list-remove"
+                aria-label={`${t.delete} ${t.ingredientName} ${index + 1}`}
                 onClick={() => removeIngredient(index)}
               >
                 <X size={16} />

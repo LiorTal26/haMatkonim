@@ -9,7 +9,8 @@ import { X } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useApp } from '@/components/providers/AppProvider';
 import { useToast } from '@/components/providers/ToastProvider';
-import { Category, CATEGORY_EMOJIS, CATEGORY_COLORS } from '@/types';
+import { Category, CATEGORY_COLORS } from '@/types';
+import { CATEGORY_ICON_GROUPS } from '@/lib/categoryIcons';
 import { getCategoryName } from '@/lib/utils';
 
 interface CategoryFormProps {
@@ -41,11 +42,16 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
   const [icon, setIcon] = useState(category?.icon || '🍽️');
   const [color, setColor] = useState(category?.color || '#E94560');
   const [isLoading, setIsLoading] = useState(false);
+  const [iconSearch, setIconSearch] = useState('');
   const { createCategory, updateCategory } = useCategories();
   const { t, locale } = useApp();
   const toast = useToast();
 
   const isEdit = !!category;
+  const query = iconSearch.trim().toLocaleLowerCase();
+  const iconGroups = CATEGORY_ICON_GROUPS.map(group => ({ ...group, icons: group.icons.filter(item =>
+    `${group.he} ${group.en} ${item.join(' ')}`.toLocaleLowerCase().includes(query)
+  ) })).filter(group => group.icons.length);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,17 +123,17 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
           {/* Icon Picker */}
           <div className="input-group" style={{ marginBottom: 'var(--space-5)' }}>
             <label className="input-label">{t.categoryIcon}</label>
-            <div className="emoji-picker-grid">
-              {CATEGORY_EMOJIS.map(emoji => (
-                <button
-                  key={emoji}
-                  type="button"
-                  className={`emoji-btn ${icon === emoji ? 'active' : ''}`}
-                  onClick={() => setIcon(emoji)}
-                >
-                  {emoji}
-                </button>
+            <input type="search" className="input" aria-label={locale === 'he' ? 'חיפוש אייקון' : 'Search icons'} placeholder={locale === 'he' ? 'חיפוש: סושי, חטיפים, אסיאתי…' : 'Search sushi, snacks, Asian…'} value={iconSearch} onChange={e => setIconSearch(e.target.value)} />
+            <div className="category-icon-picker">
+              {iconGroups.map(group => (
+                <div key={group.en}>
+                  <h3 className="category-icon-group-title">{locale === 'he' ? group.he : group.en}</h3>
+                  <div className="emoji-picker-grid">
+                    {group.icons.map(([emoji, he, en]) => <button key={emoji} type="button" className={`emoji-btn ${icon === emoji ? 'active' : ''}`} onClick={() => setIcon(emoji)} aria-label={locale === 'he' ? he : en} title={locale === 'he' ? he : en} aria-pressed={icon === emoji}>{emoji}</button>)}
+                  </div>
+                </div>
               ))}
+              {iconGroups.length === 0 && <p className="serving-hint">{t.noResults}</p>}
             </div>
           </div>
 

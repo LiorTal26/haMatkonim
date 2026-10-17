@@ -14,9 +14,12 @@ import { useCategories } from '@/hooks/useCategories';
 import { useApp } from '@/components/providers/AppProvider';
 import { useToast } from '@/components/providers/ToastProvider';
 import { useDragReorder } from '@/hooks/useDragReorder';
-import { Recipe, RecipeFormData, Difficulty, StructuredIngredient, createEmptyIngredient } from '@/types';
+import { Recipe, RecipeFormData, Difficulty, createEmptyIngredient } from '@/types';
 import IngredientInput from '@/components/recipes/IngredientInput';
 import CategoryForm from '@/components/categories/CategoryForm';
+import RecipeAIAssistant from '@/components/recipes/RecipeAIAssistant';
+import { normalizeIngredient } from '@/lib/scaleIngredients';
+import type { AIRecipeDraft } from '@/lib/recipeAI';
 import { getCategoryName } from '@/lib/utils';
 
 interface RecipeFormProps {
@@ -50,20 +53,10 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
     category_ids: getInitialCategoryIds(),
     ingredients: recipe?.ingredients?.length
       ? recipe.ingredients.map(ing => {
-          // Already a proper object
-          if (typeof ing !== 'string') return ing;
-          // Try JSON parse (saved before DB migration)
-          const trimmed = (ing as string).trim();
-          if (trimmed.startsWith('{')) {
-            try {
-              const parsed = JSON.parse(trimmed);
-              if (parsed && typeof parsed === 'object' && 'name' in parsed) {
-                return parsed as StructuredIngredient;
-              }
-            } catch { /* fall through */ }
-          }
-          // Plain text ingredient
-          return { quantity: null, unit: 'custom' as const, name: ing as string, note: '' };
+          const normalized = normalizeIngredient(ing);
+          return typeof normalized === 'string'
+            ? { quantity: null, unit: 'custom' as const, name: normalized, note: '' }
+            : normalized;
         })
       : [createEmptyIngredient()],
     instructions: recipe?.instructions?.length ? recipe.instructions : [''],
@@ -75,6 +68,17 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
   });
 
   const isEdit = !!recipe;
+
+  const applyAIDraft = (draft: AIRecipeDraft) => {
+    setFormData(previous => ({
+      ...previous, title: draft.title, description: draft.description,
+      ingredients: draft.ingredients, instructions: draft.instructions.length ? draft.instructions : [''],
+      servings: draft.servings ?? '', prep_time_minutes: draft.prep_time_minutes ?? '',
+      cook_time_minutes: draft.cook_time_minutes ?? '', difficulty: draft.difficulty,
+    }));
+    toast.success(locale === 'he' ? 'הטיוטה נוספה לטופס. בדקו את הפרטים ולחצו על שמירה.' : 'Draft added to the form. Review it, then press Save.');
+    document.getElementById('recipe-title-input')?.focus();
+  };
 
   const updateField = <K extends keyof RecipeFormData>(key: K, value: RecipeFormData[K]) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -172,6 +176,8 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         </h1>
       </div>
 
+      <RecipeAIAssistant onApply={applyAIDraft} formHasContent={Boolean(formData.title.trim() || formData.description.trim() || formData.ingredients.some(ing => ing.name.trim()) || formData.instructions.some(step => step.trim()))} />
+
       <form onSubmit={handleSubmit} className="glass-card">
         {/* Image Upload */}
         <div className="form-section">
@@ -214,7 +220,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         {/* Title & Description */}
         <div className="form-section">
           <div className="input-group" style={{ marginBottom: 'var(--space-4)' }}>
-            <label className="input-label">{t.recipeTitle} *</label>
+            <label className="input-label" htmlFor="recipe-title-input">{t.recipeTitle} *</label>
             <input
               type="text"
               className="input"
@@ -227,7 +233,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
           </div>
 
           <div className="input-group">
-            <label className="input-label">{t.description}</label>
+            <label className="input-label" htmlFor="recipe-description-input">{t.description}</label>
             <textarea
               className="input textarea"
               value={formData.description}
@@ -293,7 +299,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
           </div>
 
           <div className="input-group">
-            <label className="input-label">{t.difficulty}</label>
+            <label className="input-label" htmlFor="recipe-difficulty-select">{t.difficulty}</label>
             <select
               className="input select"
               value={formData.difficulty}
@@ -309,9 +315,9 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
 
         {/* Time & Servings */}
         <div className="form-section">
-          <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+          <div className="form-row recipe-form-times">
             <div className="input-group">
-              <label className="input-label">
+              <label className="input-label" htmlFor="recipe-prep-time">
                 <Clock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginInlineEnd: 4 }} />
                 {t.prepTime}
               </label>
@@ -327,7 +333,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
             </div>
 
             <div className="input-group">
-              <label className="input-label">
+              <label className="input-label" htmlFor="recipe-cook-time">
                 <ChefHat size={14} style={{ display: 'inline', verticalAlign: 'middle', marginInlineEnd: 4 }} />
                 {t.cookTime}
               </label>
@@ -343,7 +349,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
             </div>
 
             <div className="input-group">
-              <label className="input-label">
+              <label className="input-label" htmlFor="recipe-servings">
                 <Users size={14} style={{ display: 'inline', verticalAlign: 'middle', marginInlineEnd: 4 }} />
                 {t.servings}
               </label>
@@ -377,14 +383,11 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
               <div
                 key={index}
                 className="dynamic-list-item"
-                draggable
+                data-reorder-item
                 onDragStart={() => instructionDrag.handleDragStart(index)}
                 onDragOver={(e) => instructionDrag.handleDragOver(e, index)}
                 onDrop={() => instructionDrag.handleDrop(index)}
                 onDragEnd={instructionDrag.handleDragEnd}
-                onTouchStart={(e) => instructionDrag.handleTouchStart(index, e)}
-                onTouchMove={instructionDrag.handleTouchMove}
-                onTouchEnd={instructionDrag.handleTouchEnd}
                 style={{
                   opacity: instructionDrag.dragIndex === index ? 0.5 : 1,
                   borderTop: instructionDrag.overIndex === index && instructionDrag.dragIndex !== index
@@ -396,6 +399,11 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
                 {/* Drag handle */}
                 <span
                   className="drag-handle"
+                  draggable
+                  onDragStart={() => instructionDrag.handleDragStart(index)}
+                  onTouchStart={e => instructionDrag.handleTouchStart(index, e)}
+                  onTouchMove={instructionDrag.handleTouchMove}
+                  onTouchEnd={instructionDrag.handleTouchEnd}
                   style={{
                     cursor: 'grab',
                     color: 'var(--color-text-muted)',
@@ -429,6 +437,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
                   value={instruction}
                   onChange={e => updateInstruction(index, e.target.value)}
                   placeholder={`${t.step} ${index + 1}`}
+                  aria-label={`${t.step} ${index + 1}`}
                   rows={2}
                   style={{ minHeight: 60, resize: 'vertical' }}
                 />

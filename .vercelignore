@@ -1,0 +1,12 @@
+# Upload application sources only; keep local secrets and agent/QA files off Vercel.
+/*
+!/src
+!/public
+!/tests
+!/package.json
+!/package-lock.json
+!/next.config.ts
+!/tsconfig.json
+!/next-env.d.ts
+!/eslint.config.mjs
+!/.vercelignore

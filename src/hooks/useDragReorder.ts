@@ -75,7 +75,7 @@ export function useDragReorder<T>(
   // ── Touch Drag ──
 
   const handleTouchStart = useCallback((index: number, e: React.TouchEvent) => {
-    const target = e.currentTarget as HTMLElement;
+    const target = (e.currentTarget as HTMLElement).closest<HTMLElement>('[data-reorder-item]') || e.currentTarget as HTMLElement;
     touchStartY.current = e.touches[0].clientY;
     touchItemHeight.current = target.getBoundingClientRect().height;
     touchStartIndex.current = index;

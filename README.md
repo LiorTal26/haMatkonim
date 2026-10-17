@@ -20,6 +20,33 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Recipe AI setup
+
+The recipe editor supports camera/gallery import and creating recipes from a text request.
+Results are drafts: review the ingredients, quantities and steps, fill the regular editor,
+then press Save to persist through the existing Supabase recipe flow. Importing a photo
+does not upload the original page to your public recipe image bucket.
+
+Create a free API key at https://aistudio.google.com/api-keys using a Free Tier project
+with no billing account linked. Set `GEMINI_API_KEY` in `.env.local` for local use,
+and as a secret environment variable in Vercel for deployment. Never prefix it with
+`NEXT_PUBLIC_` or commit it. Optionally set `GEMINI_RECIPE_MODEL` to
+`gemini-2.5-flash` (default) or `gemini-2.5-flash-lite`. Paid-only models are rejected;
+there is no fallback to a paid provider. Free-tier limits still apply: exhausted quota
+shows an error and does not cause an upgrade. Restart the dev server, or redeploy
+after changing Vercel environment variables. See `.env.example` for variable names.
+
+The endpoint verifies the Supabase user, limits image/request size, requests a strict
+JSON schema and validates the returned draft. Images and prompts are sent to Google
+Gemini only when the user presses the generation button. Google's free tier may use
+submitted content to improve its products; the UI discloses this before submission.
+See https://ai.google.dev/gemini-api/docs/pricing for current free-tier terms. The in-memory
+limit is five requests per user per ten minutes **per server instance**; for a public
+deployment with multiple instances, add a shared rate limiter and provider budget limits.
+Missing API configuration leaves manual recipe entry available.
+
+Run `npm test`, `npm run lint`, and `npm run build` before publishing.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

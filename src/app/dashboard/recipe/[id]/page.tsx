@@ -16,9 +16,9 @@ import { useToast } from '@/components/providers/ToastProvider';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import NoteBoard from '@/components/notes/NoteBoard';
 import ServingScaler from '@/components/recipes/ServingScaler';
-import { Recipe, StructuredIngredient } from '@/types';
+import { Recipe } from '@/types';
 import { formatTime, getDifficultyLabel, getCategoryName } from '@/lib/utils';
-import { scaleIngredients, formatIngredient } from '@/lib/scaleIngredients';
+import { scaleIngredients, formatIngredient, normalizeIngredient } from '@/lib/scaleIngredients';
 import { motion } from 'framer-motion';
 
 export default function RecipeDetailPage() {
@@ -34,8 +34,7 @@ export default function RecipeDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Serving scaler state
-  const [adjustedServings, setAdjustedServings] = useState<number>(0);
-  const [scalingEnabled, setScalingEnabled] = useState(false);
+  const [servingAdjustment, setServingAdjustment] = useState<{ recipeId: string; count: number } | null>(null);
 
   const supabase = createClient();
   const recipeId = params.id as string;
@@ -48,6 +47,9 @@ export default function RecipeDetailPage() {
     const fromList = recipes.find(r => r.id === recipeId);
     return fromList || localRecipe;
   }, [recipes, recipeId, localRecipe]);
+
+  const adjustedServings = servingAdjustment?.recipeId === recipeId
+    ? servingAdjustment.count : recipe?.servings || 1;
 
   // Fetch recipe from Supabase if not found in list (fallback)
   useEffect(() => {
@@ -94,8 +96,7 @@ export default function RecipeDetailPage() {
           created_at: new Date().toISOString()
         }
       };
-      setLocalRecipe(secret as any);
-      setAdjustedServings(2);
+      setLocalRecipe(secret as Recipe);
       setLocalLoading(false);
       return;
     }
@@ -121,20 +122,12 @@ export default function RecipeDetailPage() {
         return;
       }
       setLocalRecipe(data);
-      setAdjustedServings(data.servings || 1);
       setLocalLoading(false);
     };
 
     fetchRecipe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipeId, listLoading, recipes, locale]);
-
-  // Initialize servings count when recipe is resolved
-  useEffect(() => {
-    if (recipe && adjustedServings === 0) {
-      setAdjustedServings(recipe.servings || 1);
-    }
-  }, [recipe, adjustedServings]);
 
   // Resolve loading state
   const loading = listLoading || (recipe === null && localLoading);
@@ -143,11 +136,11 @@ export default function RecipeDetailPage() {
   const displayIngredients = useMemo(() => {
     if (!recipe) return [];
     const original = recipe.ingredients || [];
-    if (!scalingEnabled || !recipe.servings || adjustedServings === recipe.servings) {
+    if (!recipe.servings || adjustedServings === recipe.servings) {
       return original;
     }
     return scaleIngredients(original, recipe.servings, adjustedServings);
-  }, [recipe, scalingEnabled, adjustedServings]);
+  }, [recipe, adjustedServings]);
 
   const handleToggleFavorite = async () => {
     if (!recipe) return;
@@ -203,7 +196,7 @@ export default function RecipeDetailPage() {
   if (!recipe) return null;
 
   const categoryEmoji = recipe.category?.icon || '🍽️';
-  const isScaled = scalingEnabled && recipe.servings && adjustedServings !== recipe.servings;
+  const isScaled = Boolean(recipe.servings && adjustedServings !== recipe.servings);
 
   return (
     <motion.div
@@ -334,7 +327,7 @@ export default function RecipeDetailPage() {
             <Users size={18} />
             <div>
               <div style={{ fontWeight: 600, color: 'var(--color-text)' }}>
-                {scalingEnabled ? adjustedServings : recipe.servings}
+                {adjustedServings}
               </div>
               <div style={{ fontSize: 'var(--text-xs)' }}>{t.servings}</div>
             </div>
@@ -354,15 +347,18 @@ export default function RecipeDetailPage() {
       </div>
 
       {/* Serving Scaler */}
-      {recipe.servings && (
+      {recipe.servings ? (
         <div style={{ marginBottom: 'var(--space-6)' }}>
           <ServingScaler
             originalServings={recipe.servings}
             adjustedServings={adjustedServings}
-            scalingEnabled={scalingEnabled}
-            onServingsChange={setAdjustedServings}
-            onToggleScaling={() => setScalingEnabled(prev => !prev)}
+            onServingsChange={count => setServingAdjustment({ recipeId, count })}
           />
+        </div>
+      ) : (
+        <div className="serving-scaler" style={{ marginBottom: 'var(--space-6)' }}>
+          <p className="serving-hint">{locale === 'he' ? 'כדי להתאים את כמויות המרכיבים, הגדירו למתכון מספר סועדים מקורי.' : 'Set the original serving count to adjust ingredient quantities.'}</p>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => router.push(`/dashboard/recipe/${recipe.id}/edit`)}>{locale === 'he' ? 'הגדרת מספר סועדים' : 'Set servings'}</button>
         </div>
       )}
 
@@ -393,6 +389,9 @@ export default function RecipeDetailPage() {
                 </li>
               ))}
             </ul>
+            {isScaled && displayIngredients.some(ing => typeof normalizeIngredient(ing) === 'string') && (
+              <p className="serving-hint">{locale === 'he' ? 'מרכיבים ללא כמות מזוהה נשארו ללא שינוי. אפשר לערוך את המתכון ולהזין להם כמות.' : 'Ingredients without a recognised quantity are unchanged. Edit the recipe to add their quantities.'}</p>
+            )}
           </div>
         )}
 

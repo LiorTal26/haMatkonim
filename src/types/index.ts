@@ -310,11 +310,7 @@ export const DIFFICULTY_CONFIG: Record<Difficulty, { color: string; emoji: strin
   hard: { color: '#E94560', emoji: '🔴' },
 };
 
-export const CATEGORY_EMOJIS = [
-  '🍽️', '🍝', '🥗', '🍖', '🍰', '🍲', '🥘', '🍳', '🥧',
-  '🍕', '🍔', '🌮', '🍣', '🥙', '🧁', '🍩', '🥞', '☕',
-  '🍷', '🥤', '🫕', '🥡', '🧆', '🍜', '🥐', '🫘', '🍗',
-];
+export { CATEGORY_EMOJIS } from '@/lib/categoryIcons';
 
 export const CATEGORY_COLORS = [
   '#E94560', '#F5A623', '#2ECC71', '#53D8FB', '#9B59B6',
