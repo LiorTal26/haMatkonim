@@ -13,11 +13,12 @@ import { getInitials } from '@/lib/utils';
 
 interface HeaderProps {
   onMenuClick: () => void;
+  isMenuOpen?: boolean;
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }
 
-export default function Header({ onMenuClick, searchQuery, onSearchChange }: HeaderProps) {
+export default function Header({ onMenuClick, isMenuOpen = false, searchQuery, onSearchChange }: HeaderProps) {
   const { profile, signOut } = useAuth();
   const { t, theme, toggleTheme, locale, setLocale } = useApp();
   const router = useRouter();
@@ -34,6 +35,8 @@ export default function Header({ onMenuClick, searchQuery, onSearchChange }: Hea
       <button
         className="btn btn-ghost btn-icon"
         onClick={onMenuClick}
+        aria-label={locale === 'he' ? 'פתיחת תפריט' : 'Open menu'}
+        aria-expanded={isMenuOpen}
         id="menu-toggle-btn"
         style={{ display: 'none' }}
       >
@@ -47,6 +50,7 @@ export default function Header({ onMenuClick, searchQuery, onSearchChange }: Hea
           type="text"
           className="input"
           placeholder={t.searchRecipes}
+          aria-label={t.searchRecipes}
           value={searchQuery}
           onChange={e => onSearchChange(e.target.value)}
           id="search-input"
@@ -70,6 +74,7 @@ export default function Header({ onMenuClick, searchQuery, onSearchChange }: Hea
           className="btn btn-ghost btn-icon hide-mobile"
           onClick={() => setLocale(locale === 'he' ? 'en' : 'he')}
           title={locale === 'he' ? 'English' : 'עברית'}
+          aria-label={locale === 'he' ? 'Switch to English' : 'מעבר לעברית'}
           id="language-toggle-btn"
         >
           <Globe size={18} />
@@ -80,6 +85,7 @@ export default function Header({ onMenuClick, searchQuery, onSearchChange }: Hea
           className="btn btn-ghost btn-icon hide-mobile"
           onClick={toggleTheme}
           title={theme === 'dark' ? t.lightMode : t.darkMode}
+          aria-label={theme === 'dark' ? t.lightMode : t.darkMode}
           id="theme-toggle-btn"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -91,6 +97,8 @@ export default function Header({ onMenuClick, searchQuery, onSearchChange }: Hea
             className="avatar"
             onClick={() => setShowUserMenu(!showUserMenu)}
             id="user-menu-btn"
+            aria-label={locale === 'he' ? 'תפריט חשבון' : 'Account menu'}
+            aria-expanded={showUserMenu}
             style={{ border: 'none', cursor: 'pointer' }}
           >
             {profile?.display_name ? getInitials(profile.display_name) : '?'}

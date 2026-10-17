@@ -6,7 +6,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ChefHat, PlusCircle, Heart, Layers } from 'lucide-react';
+import { ChefHat, PlusCircle, Layers } from 'lucide-react';
 import { useApp } from '@/components/providers/AppProvider';
 
 export default function MobileNav() {
@@ -20,7 +20,7 @@ export default function MobileNav() {
   ];
 
   return (
-    <nav className="mobile-nav">
+    <nav className="mobile-nav" aria-label={t.appName}>
       <ul className="mobile-nav-list">
         {navItems.map(item => {
           const Icon = item.icon;
@@ -30,6 +30,7 @@ export default function MobileNav() {
               <Link
                 href={item.href}
                 className={`mobile-nav-item ${isActive ? 'active' : ''}`}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <Icon size={22} />
                 <span>{item.label}</span>

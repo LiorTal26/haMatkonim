@@ -7,6 +7,7 @@
 import { useMemo } from 'react';
 import { Plus, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useDashboard } from './layout';
 import { useRecipes } from '@/hooks/useRecipes';
 import { useApp } from '@/components/providers/AppProvider';
@@ -165,7 +166,7 @@ export default function DashboardPage() {
       const matchesFavorites = !showFavorites || secret.is_favorite;
 
       if (matchesSearch && matchesCategory && matchesFavorites) {
-        result = [secret as any, ...result];
+        result = [secret as Recipe, ...result];
       }
     }
 
@@ -191,7 +192,7 @@ export default function DashboardPage() {
         >
           <span className="choo-pulse" style={{ fontSize: 'var(--text-2xl)', flexShrink: 0 }}>🎉</span>
           <div style={{ flex: 1 }}>
-            <h3 style={{ fontWeight: 700, color: '#FF2E93', fontSize: 'var(--text-base)' }}>יום הולדת שמח לצ'ו אהובתי! 🎂❤️</h3>
+            <h3 style={{ fontWeight: 700, color: '#FF2E93', fontSize: 'var(--text-base)' }}>{"יום הולדת שמח לצ'ו אהובתי! 🎂❤️"}</h3>
             <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
               ספר המתכונים המיוחד שלך מופעל כעת במצב יום הולדת חגיגי.
             </p>
@@ -200,20 +201,19 @@ export default function DashboardPage() {
       )}
 
       {/* Page header */}
-      <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-4)' }}>
+      <div className="collection-heading">
         <div>
-          <h1 style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
-            {showFavorites ? `❤️ ${t.favorites}` : t.allRecipes}
+          <h1>
+            {showFavorites ? t.favorites : (locale === 'he' ? 'מה מבשלים היום?' : 'What’s cooking today?')}
+            {!loading && <span className="collection-count" aria-label={`${processedRecipes.length} ${t.recipes}`}>{processedRecipes.length}</span>}
           </h1>
-          {!loading && (
-            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--space-1)' }}>
-              {processedRecipes.length} {t.recipes}
-              {processedRecipes.length !== recipes.length && (
-                <span> / {recipes.length} {t.allRecipes}</span>
-              )}
-            </p>
-          )}
+          <p className="collection-description">{showFavorites
+            ? (locale === 'he' ? 'המתכונים שתמיד כיף לחזור אליהם.' : 'The recipes you always come back to.')
+            : (locale === 'he' ? 'כל המתכונים שלכם, מחכים לרגע טעים.' : 'Your collection, ready for something delicious.')}
+            {!loading && processedRecipes.length !== recipes.length && <span> {processedRecipes.length} / {recipes.length} {t.recipes}</span>}
+          </p>
         </div>
+        <Link href="/dashboard/recipe/new" className="btn btn-primary"><Plus size={18} aria-hidden="true" />{t.newRecipe}</Link>
       </div>
 
       {/* Filter Bar */}

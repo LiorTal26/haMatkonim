@@ -3,9 +3,6 @@
    "Warm Kitchen" Theme with RTL/LTR Support
    ============================================ */
 
-/* ─── Google Fonts Import ─── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
-
 /* ─── CSS Reset ─── */
 *,
 *::before,
@@ -18,41 +15,43 @@
 /* ─── Design Tokens (Dark Theme — Default) ─── */
 :root {
   /* Colors — Dark Mode */
-  --color-bg: #0F0F1A;
-  --color-bg-gradient: linear-gradient(135deg, #0F0F1A 0%, #1A1A2E 50%, #16213E 100%);
-  --color-surface: #1A1A2E;
-  --color-surface-hover: #1E1E36;
-  --color-surface-elevated: #0F3460;
-  --color-surface-glass: rgba(26, 26, 46, 0.7);
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-hover: rgba(255, 255, 255, 0.15);
+  color-scheme: dark;
+  --color-bg: #14251D;
+  --color-bg-gradient: #14251D;
+  --color-surface: #1C3026;
+  --color-surface-hover: #253F32;
+  --color-surface-elevated: #2B4638;
+  --color-surface-glass: rgba(28, 48, 38, 0.94);
+  --color-border: #354D3E;
+  --color-border-hover: #668170;
 
   /* Primary Palette */
-  --color-primary: #E94560;
-  --color-primary-hover: #FF5A76;
-  --color-primary-subtle: rgba(233, 69, 96, 0.12);
-  --color-secondary: #F5A623;
-  --color-secondary-hover: #FFB940;
-  --color-secondary-subtle: rgba(245, 166, 35, 0.12);
-  --color-accent: #53D8FB;
-  --color-accent-hover: #72E1FC;
-  --color-accent-subtle: rgba(83, 216, 251, 0.12);
+  --color-primary: #A2D3AF;
+  --color-primary-hover: #BDE5C7;
+  --color-primary-subtle: rgba(162, 211, 175, 0.12);
+  --color-secondary: #E5D978;
+  --color-secondary-hover: #F0E69C;
+  --color-secondary-subtle: rgba(229, 217, 120, 0.1);
+  --color-accent: #A9CED0;
+  --color-accent-hover: #C4DFE0;
+  --color-accent-subtle: rgba(169, 206, 208, 0.12);
+  --color-on-primary: #183D29;
 
   /* Semantic Colors */
-  --color-success: #2ECC71;
-  --color-success-subtle: rgba(46, 204, 113, 0.12);
-  --color-warning: #F5A623;
-  --color-warning-subtle: rgba(245, 166, 35, 0.12);
-  --color-error: #E94560;
-  --color-error-subtle: rgba(233, 69, 96, 0.12);
-  --color-info: #53D8FB;
-  --color-info-subtle: rgba(83, 216, 251, 0.12);
+  --color-success: #A2D3AF;
+  --color-success-subtle: rgba(162, 211, 175, 0.12);
+  --color-warning: #E5D978;
+  --color-warning-subtle: rgba(229, 217, 120, 0.12);
+  --color-error: #FFB6AD;
+  --color-error-subtle: rgba(255, 182, 173, 0.12);
+  --color-info: #A9CED0;
+  --color-info-subtle: rgba(169, 206, 208, 0.12);
 
   /* Text Colors */
-  --color-text: #F8F8F2;
-  --color-text-secondary: #A0A0B8;
-  --color-text-muted: #6B6B80;
-  --color-text-inverse: #0F0F1A;
+  --color-text: #F1F4E9;
+  --color-text-secondary: #C1CDBE;
+  --color-text-muted: #A8BBA9;
+  --color-text-inverse: #183D29;
 
   /* Note Colors (sticky notes) */
   --note-yellow: #FFF3CD;
@@ -62,8 +61,8 @@
   --note-text: #2D2D3A;
 
   /* Typography */
-  --font-display: 'Outfit', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-display: var(--font-rubik), Arial, sans-serif;
+  --font-body: var(--font-rubik), Arial, sans-serif;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -76,7 +75,7 @@
   --text-5xl: 3rem;
   --text-6xl: 3.75rem;
 
-  --leading-tight: 1.1;
+  --leading-tight: 1.2;
   --leading-snug: 1.3;
   --leading-normal: 1.5;
   --leading-relaxed: 1.7;
@@ -108,15 +107,15 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-  --shadow-glow-primary: 0 0 20px rgba(233, 69, 96, 0.3);
-  --shadow-glow-secondary: 0 0 20px rgba(245, 166, 35, 0.3);
-  --shadow-glow-accent: 0 0 20px rgba(83, 216, 251, 0.3);
+  --shadow-glow-primary: 0 3px 10px rgba(20, 37, 29, 0.12);
+  --shadow-glow-secondary: 0 3px 10px rgba(20, 37, 29, 0.12);
+  --shadow-glow-accent: 0 3px 10px rgba(20, 37, 29, 0.12);
 
   /* Glassmorphism */
-  --glass-bg: rgba(26, 26, 46, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-blur: blur(20px);
-  --glass-saturate: saturate(180%);
+  --glass-bg: var(--color-surface);
+  --glass-border: var(--color-border);
+  --glass-blur: blur(0);
+  --glass-saturate: saturate(100%);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -142,22 +141,41 @@
 
 /* ─── Light Theme ─── */
 [data-theme="light"] {
-  --color-bg: #F5F3EF;
-  --color-bg-gradient: linear-gradient(135deg, #F5F3EF 0%, #FFF8F0 50%, #FBF4EC 100%);
+  color-scheme: light;
+  --color-bg: #FAFBF7;
+  --color-bg-gradient: #FAFBF7;
   --color-surface: #FFFFFF;
-  --color-surface-hover: #F8F6F2;
-  --color-surface-elevated: #FFFFFF;
-  --color-surface-glass: rgba(255, 255, 255, 0.7);
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-hover: rgba(0, 0, 0, 0.15);
+  --color-surface-hover: #F0F4ED;
+  --color-surface-elevated: #EAF0E7;
+  --color-surface-glass: rgba(255, 255, 255, 0.94);
+  --color-border: #DDE5D9;
+  --color-border-hover: #94AC98;
 
-  --color-text: #1A1A2E;
-  --color-text-secondary: #555568;
-  --color-text-muted: #8888A0;
-  --color-text-inverse: #F8F8F2;
+  --color-text: #20392D;
+  --color-text-secondary: #526653;
+  --color-text-muted: #607361;
+  --color-text-inverse: #FFFFFF;
+  --color-primary: #245C43;
+  --color-primary-hover: #194B34;
+  --color-primary-subtle: #EAF0E7;
+  --color-on-primary: #FFFFFF;
+  --color-secondary: #75631C;
+  --color-secondary-hover: #594A12;
+  --color-secondary-subtle: #F7F2CF;
+  --color-accent: #2E686C;
+  --color-accent-hover: #205156;
+  --color-accent-subtle: #E9F1F0;
+  --color-success: #276543;
+  --color-success-subtle: #EDF4EB;
+  --color-warning: #75631C;
+  --color-warning-subtle: #F7F2CF;
+  --color-error: #AE3D33;
+  --color-error-subtle: #FBEDEB;
+  --color-info: #2E686C;
+  --color-info-subtle: #E9F1F0;
 
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-bg: var(--color-surface);
+  --glass-border: var(--color-border);
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -167,6 +185,7 @@
 
 /* ─── Choo Mode Rose/Lavender Theme ─── */
 [data-choo-mode="true"] {
+  --color-on-primary: #FFFFFF;
   /* Royal Lavender Purple & Rose Gold */
   --color-primary: #D63384; /* Deep vibrant rose/magenta */
   --color-primary-hover: #FD7E14; /* Warm Gold tint on hover */

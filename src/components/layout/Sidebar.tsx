@@ -7,7 +7,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BookOpen, Heart, Layers, Plus, Settings, ChefHat, Globe, Sun, Moon, Check } from 'lucide-react';
+import { BookOpen, Heart, Plus, Settings, ChefHat, Globe, Sun, Moon, Check, X } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useApp } from '@/components/providers/AppProvider';
 import CategoryForm from '@/components/categories/CategoryForm';
@@ -90,6 +90,7 @@ export default function Sidebar({
         >
           {chooMode ? (locale === 'he' ? "ספר המתכונים של צ'ו 🎂" : "Choo's Recipe Book 🎂") : t.appName}
         </span>
+        <button type="button" className="btn btn-ghost btn-icon sidebar-close" aria-label={t.close} onClick={event => { event.stopPropagation(); onClose(); }}><X size={20} /></button>
       </div>
 
       {/* Quick Filters */}
@@ -151,7 +152,7 @@ export default function Sidebar({
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                      <Check size={9} color="white" strokeWidth={3} />
+                      <Check size={9} color="var(--color-on-primary)" strokeWidth={3} />
                     </span>
                   )}
                 </div>

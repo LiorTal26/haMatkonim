@@ -467,6 +467,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="main-content">
               <Header
                 onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+                isMenuOpen={sidebarOpen}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
               />

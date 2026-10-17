@@ -7,7 +7,7 @@
 import { ArrowDownAZ, Clock, ChefHat, SlidersHorizontal, Tag } from 'lucide-react';
 import { useApp } from '@/components/providers/AppProvider';
 import { useCategories } from '@/hooks/useCategories';
-import { SortOption, DifficultyFilter, TimeFilter, Category } from '@/types';
+import { SortOption, DifficultyFilter, TimeFilter } from '@/types';
 import { getCategoryName } from '@/lib/utils';
 
 interface FilterBarProps {
@@ -64,7 +64,7 @@ export default function FilterBar({
     <div className="filter-bar">
       {/* Sort */}
       <div className="filter-group">
-        <label className="filter-label">
+        <label className="filter-label" htmlFor="sort-select">
           <ArrowDownAZ size={14} />
           {t.sortBy}
         </label>
@@ -94,6 +94,8 @@ export default function FilterBar({
               <button
                 key={cat.id}
                 className={`filter-chip ${selectedCategoryIds.includes(cat.id) ? 'active' : ''}`}
+                type="button"
+                aria-pressed={selectedCategoryIds.includes(cat.id)}
                 onClick={() => onToggleCategoryFilter(cat.id)}
                 style={selectedCategoryIds.includes(cat.id) ? {
                   background: `${cat.color}25`,
@@ -120,6 +122,8 @@ export default function FilterBar({
             <button
               key={opt.value}
               className={`filter-chip ${filterDifficulty === opt.value ? 'active' : ''}`}
+              type="button"
+              aria-pressed={filterDifficulty === opt.value}
               onClick={() => onDifficultyChange(opt.value)}
             >
               {opt.emoji && <span>{opt.emoji}</span>}
@@ -140,6 +144,8 @@ export default function FilterBar({
             <button
               key={opt.value}
               className={`filter-chip ${filterTime === opt.value ? 'active' : ''}`}
+              type="button"
+              aria-pressed={filterTime === opt.value}
               onClick={() => onTimeChange(opt.value)}
             >
               {opt.label}
@@ -152,6 +158,7 @@ export default function FilterBar({
       {hasActiveFilters && (
         <button
           className="filter-clear"
+          type="button"
           onClick={() => {
             onDifficultyChange('all');
             onTimeChange('all');

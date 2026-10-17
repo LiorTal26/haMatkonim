@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Rubik } from "next/font/google";
 import "./globals.css";
+import "./new-style.css";
 import { AppProvider } from "@/components/providers/AppProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 
-const inter = Inter({
-  variable: "--font-body",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const outfit = Outfit({
-  variable: "--font-display",
-  subsets: ["latin"],
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["hebrew", "latin"],
   display: "swap",
 });
 
@@ -22,7 +17,7 @@ export const metadata: Metadata = {
   keywords: ["recipes", "cookbook", "מתכונים", "ספר מתכונים"],
   manifest: "/manifest.json",
   other: {
-    "theme-color": "#E94560",
+    "theme-color": "#245C43",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "apple-mobile-web-app-title": "ספר המתכונים"
@@ -39,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" className={`${inter.variable} ${outfit.variable}`} suppressHydrationWarning>
+    <html lang="he" dir="rtl" className={rubik.variable} suppressHydrationWarning>
       <body>
         <AppProvider>
           <ToastProvider>

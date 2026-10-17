@@ -5,7 +5,6 @@
 // ============================================
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, BookOpen } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,7 +21,6 @@ export default function RegisterPage() {
   const { signUpWithEmail, signInWithGoogle } = useAuth();
   const { t, locale } = useApp();
   const toast = useToast();
-  const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +53,7 @@ export default function RegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-card glass-card">
+        <Link href="/" className="auth-home-link"><BookOpen size={17} aria-hidden="true" />{locale === 'he' ? 'חזרה לספר המתכונים' : 'Back to Recipe Book'}</Link>
         {isSuccess ? (
           <div className="auth-header" style={{ animation: 'fadeIn 0.5s ease', textAlign: 'center' }}>
             <div style={{ fontSize: '4rem', marginBottom: 'var(--space-4)' }}>✉️</div>
@@ -97,7 +96,7 @@ export default function RegisterPage() {
             </button>
 
             <div className="auth-divider">
-              <span>or</span>
+              <span>{locale === 'he' ? 'או באמצעות אימייל' : 'or with email'}</span>
             </div>
 
             <form className="auth-form" onSubmit={handleRegister}>
@@ -120,6 +119,7 @@ export default function RegisterPage() {
                 <input
                   id="register-email"
                   type="email"
+                  dir="ltr"
                   className="input"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -146,18 +146,9 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      insetInlineEnd: '12px',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--color-text-muted)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      padding: '4px',
-                    }}
+                    className="auth-password-toggle"
+                    aria-label={locale === 'he' ? (showPassword ? 'הסתרת סיסמה' : 'הצגת סיסמה') : (showPassword ? 'Hide password' : 'Show password')}
+                    aria-pressed={showPassword}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
