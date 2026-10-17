@@ -81,12 +81,12 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content animate-scale-in" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-scale-in book-dialog book-category-dialog" role="dialog" aria-modal="true" aria-labelledby="category-dialog-title" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">
+          <h2 className="modal-title" id="category-dialog-title">
             {isEdit ? t.editCategory : t.newCategory}
           </h2>
-          <button className="btn btn-ghost btn-icon" onClick={onClose}>
+          <button className="btn btn-ghost btn-icon" aria-label={t.close} onClick={onClose}>
             <X size={18} />
           </button>
         </div>
@@ -94,7 +94,7 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
         <form onSubmit={handleSubmit}>
           {/* Hebrew Name */}
           <div className="input-group" style={{ marginBottom: 'var(--space-4)' }}>
-            <label className="input-label">{t.categoryNameHebrew}</label>
+            <label className="input-label" htmlFor="category-name-he-input">{t.categoryNameHebrew}</label>
             <input
               type="text"
               className="input"
@@ -109,7 +109,7 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
 
           {/* English Name */}
           <div className="input-group" style={{ marginBottom: 'var(--space-5)' }}>
-            <label className="input-label">{t.categoryNameEnglish}</label>
+            <label className="input-label" htmlFor="category-name-en-input">{t.categoryNameEnglish}</label>
             <input
               type="text"
               className="input"
@@ -146,6 +146,8 @@ export default function CategoryForm({ category, onClose }: CategoryFormProps) {
                   key={c}
                   type="button"
                   className={`color-swatch ${color === c ? 'active' : ''}`}
+                  aria-label={`${t.categoryColor}: ${c}`}
+                  aria-pressed={color === c}
                   style={{ background: c }}
                   onClick={() => setColor(c)}
                 />

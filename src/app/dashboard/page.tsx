@@ -174,7 +174,7 @@ export default function DashboardPage() {
   }, [recipes, selectedCategoryIds, showFavorites, searchQuery, filterDifficulty, filterTime, sortBy, locale, chooMode]);
 
   return (
-    <>
+    <div className="book-collection">
       {/* Choo Birthday Banner */}
       {chooMode && (
         <div
@@ -201,8 +201,9 @@ export default function DashboardPage() {
       )}
 
       {/* Page header */}
-      <div className="collection-heading">
+      <div className="collection-heading book-collection-heading">
         <div>
+          <BookOpen className="book-collection-mark" size={30} strokeWidth={1.5} aria-hidden="true" />
           <h1>
             {showFavorites ? t.favorites : (locale === 'he' ? 'מה מבשלים היום?' : 'What’s cooking today?')}
             {!loading && <span className="collection-count" aria-label={`${processedRecipes.length} ${t.recipes}`}>{processedRecipes.length}</span>}
@@ -216,6 +217,7 @@ export default function DashboardPage() {
         <Link href="/dashboard/recipe/new" className="btn btn-primary"><Plus size={18} aria-hidden="true" />{t.newRecipe}</Link>
       </div>
 
+      <div className="book-index">
       {/* Filter Bar */}
       <FilterBar
         sortBy={sortBy}
@@ -264,6 +266,7 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
-    </>
+      </div>
+    </div>
   );
 }

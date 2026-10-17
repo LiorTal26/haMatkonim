@@ -19,7 +19,7 @@ export default function StickyNote({ note, onEdit, onDelete }: StickyNoteProps) 
   const rotation = useMemo(() => getRandomRotation(), []);
 
   return (
-    <div
+    <article
       className="sticky-note"
       style={{
         background: note.note_color,
@@ -31,6 +31,7 @@ export default function StickyNote({ note, onEdit, onDelete }: StickyNoteProps) 
           className="sticky-note-btn"
           onClick={() => onEdit(note)}
           title="Edit"
+          aria-label="Edit note"
         >
           <Edit3 size={14} />
         </button>
@@ -38,6 +39,7 @@ export default function StickyNote({ note, onEdit, onDelete }: StickyNoteProps) 
           className="sticky-note-btn"
           onClick={() => onDelete(note.id)}
           title="Delete"
+          aria-label="Delete note"
         >
           <Trash2 size={14} />
         </button>
@@ -45,13 +47,9 @@ export default function StickyNote({ note, onEdit, onDelete }: StickyNoteProps) 
       <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
         {note.content}
       </p>
-      <div style={{
-        marginTop: 'var(--space-3)',
-        fontSize: 'var(--text-xs)',
-        opacity: 0.5,
-      }}>
+      <div className="sticky-note-date">
         {new Date(note.updated_at).toLocaleDateString()}
       </div>
-    </div>
+    </article>
   );
 }

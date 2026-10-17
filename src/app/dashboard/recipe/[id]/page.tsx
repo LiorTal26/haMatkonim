@@ -205,13 +205,13 @@ export default function RecipeDetailPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      style={{ maxWidth: 900, margin: '0 auto' }}
+      className="recipe-book"
     >
       {/* Header */}
-      <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-4)' }}>
-        <div className="flex items-center gap-3">
-          <button className="btn btn-ghost btn-icon" onClick={() => router.push('/dashboard')}>
-            <ArrowLeft size={20} />
+      <div className="recipe-book-toolbar">
+        <div className="recipe-book-tags">
+          <button className="btn btn-ghost btn-icon" aria-label={t.back} onClick={() => router.push('/dashboard')}>
+            <ArrowLeft className="book-back-icon" size={20} />
           </button>
           {(() => {
             const cats = recipe.categories?.length ? recipe.categories : (recipe.category ? [recipe.category] : []);
@@ -230,11 +230,13 @@ export default function RecipeDetailPage() {
           })()}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="recipe-book-actions">
           <button
             className={`btn btn-ghost btn-icon ${recipe.is_favorite ? 'active' : ''}`}
             onClick={handleToggleFavorite}
             title={recipe.is_favorite ? t.unfavorite : t.favorite}
+            aria-label={recipe.is_favorite ? t.unfavorite : t.favorite}
+            aria-pressed={recipe.is_favorite}
           >
             <Heart
               size={20}
@@ -252,6 +254,7 @@ export default function RecipeDetailPage() {
               }
             }}
             title={t.edit}
+            aria-label={t.edit}
           >
             <Edit size={20} />
           </button>
@@ -259,6 +262,7 @@ export default function RecipeDetailPage() {
             className="btn btn-ghost btn-icon"
             onClick={() => setShowDeleteConfirm(true)}
             title={t.delete}
+            aria-label={t.delete}
             style={{ color: 'var(--color-error)' }}
           >
             <Trash2 size={20} />
@@ -266,6 +270,7 @@ export default function RecipeDetailPage() {
         </div>
       </div>
 
+      <div className="recipe-book-cover">
       {/* Hero Image */}
       {recipe.image_url ? (
         <img
@@ -279,30 +284,21 @@ export default function RecipeDetailPage() {
         </div>
       )}
 
+      <div className="recipe-book-cover-copy">
       {/* Title */}
-      <h1 style={{
-        fontSize: 'var(--text-3xl)',
-        fontFamily: 'var(--font-display)',
-        fontWeight: 800,
-        marginBottom: 'var(--space-2)',
-      }}>
+      <h1 className="recipe-book-title">
         {recipe.title}
       </h1>
 
       {recipe.description && (
-        <p style={{
-          fontSize: 'var(--text-base)',
-          color: 'var(--color-text-secondary)',
-          marginBottom: 'var(--space-4)',
-          lineHeight: 'var(--leading-relaxed)',
-        }}>
+        <p className="recipe-book-description">
           {recipe.description}
         </p>
       )}
 
       {/* Meta Strip */}
       <div className="recipe-meta-strip">
-        {recipe.prep_time_minutes && (
+        {Boolean(recipe.prep_time_minutes) && (
           <div className="recipe-meta-item">
             <Clock size={18} />
             <div>
@@ -313,7 +309,7 @@ export default function RecipeDetailPage() {
             </div>
           </div>
         )}
-        {recipe.cook_time_minutes && (
+        {Boolean(recipe.cook_time_minutes) && (
           <div className="recipe-meta-item">
             <Flame size={18} />
             <div>
@@ -347,7 +343,10 @@ export default function RecipeDetailPage() {
           </div>
         )}
       </div>
+      </div>
+      </div>
 
+      <div className="recipe-book-paper">
       {/* Serving Scaler */}
       {recipe.servings ? (
         <div style={{ marginBottom: 'var(--space-6)' }}>
@@ -371,7 +370,7 @@ export default function RecipeDetailPage() {
       <div className="recipe-sections">
         {/* Ingredients */}
         {displayIngredients.length > 0 && (
-          <div>
+          <section className="recipe-book-ingredients">
             <h2 className="recipe-section-title">
               📝 {t.ingredients}
               {isScaled && (
@@ -384,27 +383,28 @@ export default function RecipeDetailPage() {
             {isScaled && displayIngredients.some(ing => typeof normalizeIngredient(ing) === 'string') && (
               <p className="serving-hint">{locale === 'he' ? 'מרכיבים ללא כמות מזוהה נשארו ללא שינוי. אפשר לערוך את המתכון ולהזין להם כמות.' : 'Ingredients without a recognised quantity are unchanged. Edit the recipe to add their quantities.'}</p>
             )}
-          </div>
+          </section>
         )}
 
         {/* Instructions */}
         {recipe.instructions.length > 0 && (
-          <div>
+          <section className="recipe-book-instructions">
             <h2 className="recipe-section-title">📋 {t.instructions}</h2>
             <RecipeInstructions instructions={recipe.instructions} />
-          </div>
+          </section>
         )}
       </div>
 
       {/* Notes Board */}
       <NoteBoard recipeId={recipeId} />
+      </div>
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="modal-content animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="modal-content animate-scale-in book-dialog" role="dialog" aria-modal="true" aria-labelledby="recipe-delete-title" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{t.deleteRecipe}</h2>
+              <h2 className="modal-title" id="recipe-delete-title">{t.deleteRecipe}</h2>
             </div>
             <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)' }}>
               {locale === 'he'

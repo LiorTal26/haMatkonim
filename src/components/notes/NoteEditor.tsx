@@ -28,12 +28,12 @@ export default function NoteEditor({ note, onSave, onClose }: NoteEditorProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content animate-scale-in" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-scale-in book-dialog book-note-dialog" role="dialog" aria-modal="true" aria-labelledby="note-dialog-title" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">
+          <h2 className="modal-title" id="note-dialog-title">
             {note ? t.editNote : t.addNote}
           </h2>
-          <button className="btn btn-ghost btn-icon" onClick={onClose}>
+          <button className="btn btn-ghost btn-icon" aria-label={t.close} onClick={onClose}>
             <X size={18} />
           </button>
         </div>
@@ -48,6 +48,8 @@ export default function NoteEditor({ note, onSave, onClose }: NoteEditorProps) {
                   key={nc.value}
                   type="button"
                   className={`color-swatch ${color === nc.value ? 'active' : ''}`}
+                  aria-label={`${t.noteColor}: ${nc.value}`}
+                  aria-pressed={color === nc.value}
                   style={{ background: nc.value, width: 44, height: 44 }}
                   onClick={() => setColor(nc.value)}
                 />
@@ -57,7 +59,7 @@ export default function NoteEditor({ note, onSave, onClose }: NoteEditorProps) {
 
           {/* Content */}
           <div className="input-group" style={{ marginBottom: 'var(--space-4)' }}>
-            <label className="input-label">{t.noteContent}</label>
+            <label className="input-label" htmlFor="note-content-input">{t.noteContent}</label>
             <textarea
               className="input textarea"
               value={content}

@@ -448,7 +448,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <RecipesContext.Provider value={recipesValue}>
       <CategoriesContext.Provider value={categoriesValue}>
         <DashboardContext.Provider value={dashboardValue}>
-          <div className="dashboard-layout">
+          <div className="dashboard-layout cookbook-workspace">
             <Sidebar
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
@@ -484,7 +484,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setSidebarOpen(false)}
               />
             )}
-            <ChooCelebration show={showChooGreeting} onClose={() => setShowChooGreeting(false)} />
+            <div className="choo-celebration-scope"><ChooCelebration show={showChooGreeting} onClose={() => setShowChooGreeting(false)} /></div>
           </div>
         </DashboardContext.Provider>
       </CategoriesContext.Provider>

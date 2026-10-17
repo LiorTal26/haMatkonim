@@ -57,9 +57,9 @@ export default function NoteBoard({ recipeId }: NoteBoardProps) {
   };
 
   return (
-    <div style={{ marginTop: 'var(--space-8)' }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-4)' }}>
-        <h2 className="recipe-section-title">
+    <section className="book-notes" aria-labelledby="book-notes-title">
+      <div className="book-notes-heading">
+        <h2 className="recipe-section-title" id="book-notes-title">
           <StickyNoteIcon size={22} style={{ color: 'var(--color-secondary)' }} />
           📌 {t.myNotes}
         </h2>
@@ -115,6 +115,6 @@ export default function NoteBoard({ recipeId }: NoteBoardProps) {
           }}
         />
       )}
-    </div>
+    </section>
   );
 }

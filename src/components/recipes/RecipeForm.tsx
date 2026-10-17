@@ -178,22 +178,23 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div className="book-editor">
       {/* Header */}
-      <div className="flex items-center gap-4" style={{ marginBottom: 'var(--space-6)' }}>
-        <button className="btn btn-ghost btn-icon" onClick={() => router.back()}>
-          <ArrowLeft size={20} />
+      <div className="book-page-heading">
+        <button className="btn btn-ghost btn-icon" aria-label={t.back} onClick={() => router.back()}>
+          <ArrowLeft className="book-back-icon" size={20} />
         </button>
-        <h1 style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+        <div><h1 className="book-page-title">
           {isEdit ? t.editRecipe : t.newRecipe}
         </h1>
+        <p className="book-page-description">{locale === 'he' ? 'הפרטים הקטנים שהופכים מנה למתכון שלכם.' : 'The little details that make a recipe your own.'}</p></div>
       </div>
 
       <RecipeAIAssistant onApply={applyAIDraft} formHasContent={Boolean(formData.title.trim() || formData.description.trim() || formData.ingredients.some(ing => ing.name.trim()) || cleanInstructions(formData.instructions).length)} />
 
-      <form onSubmit={handleSubmit} className="glass-card">
+      <form onSubmit={handleSubmit} className="glass-card book-editor-form">
         {/* Image Upload */}
-        <div className="form-section">
+        <div className="form-section book-form-photo">
           <div
             className="image-upload"
             onClick={() => fileInputRef.current?.click()}
@@ -231,7 +232,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         </div>
 
         {/* Title & Description */}
-        <div className="form-section">
+        <div className="form-section book-form-identity">
           <div className="input-group" style={{ marginBottom: 'var(--space-4)' }}>
             <label className="input-label" htmlFor="recipe-title-input">{t.recipeTitle} *</label>
             <input
@@ -258,7 +259,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         </div>
 
         {/* Categories (Multi-select chips) & Difficulty */}
-        <div className="form-section">
+        <div className="form-section book-form-classification">
           <div className="input-group" style={{ marginBottom: 'var(--space-4)' }}>
             <label className="input-label">{t.categories}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -268,6 +269,8 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
                   <button
                     key={cat.id}
                     type="button"
+                    aria-pressed={isSelected}
+                    className="book-category-choice"
                     onClick={() => toggleCategory(cat.id)}
                     style={{
                       display: 'flex',
@@ -291,6 +294,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
               {/* Add new category button */}
               <button
                 type="button"
+                className="book-category-choice"
                 onClick={() => setShowCategoryForm(true)}
                 style={{
                   display: 'flex',
@@ -327,7 +331,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         </div>
 
         {/* Time & Servings */}
-        <div className="form-section">
+        <div className="form-section book-form-timing">
           <div className="form-row recipe-form-times">
             <div className="input-group">
               <label className="input-label" htmlFor="recipe-prep-time">
@@ -380,7 +384,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         </div>
 
         {/* Ingredients — Structured */}
-        <div className="form-section">
+        <div className="form-section book-form-ingredients">
           <h3 className="form-section-title">📝 {t.ingredients}</h3>
           <IngredientInput
             ingredients={formData.ingredients}
@@ -389,7 +393,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         </div>
 
         {/* Instructions with Drag & Drop */}
-        <div className="form-section">
+        <div className="form-section book-form-steps">
           <h3 className="form-section-title">📋 {t.instructions}</h3>
           <div className="dynamic-list">
             {formData.instructions.map((instruction, index) => getInstructionSection(instruction) !== null ? (
@@ -431,12 +435,13 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
                   <GripVertical size={16} />
                 </span>
                 <span
+                  className="book-form-step-number"
                   style={{
                     width: 28,
                     height: 28,
                     borderRadius: 'var(--radius-full)',
                     background: 'var(--color-primary)',
-                    color: 'white',
+                    color: 'var(--color-on-primary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -481,7 +486,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         </div>
 
         {/* Submit */}
-        <div className="flex justify-between" style={{ paddingTop: 'var(--space-6)', borderTop: '1px solid var(--color-border)' }}>
+        <div className="book-form-submit">
           <button type="button" className="btn btn-secondary" onClick={() => router.back()}>
             {t.cancel}
           </button>

@@ -41,16 +41,17 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
+    <div className="book-categories">
       {/* Header */}
-      <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-6)' }}>
-        <div className="flex items-center gap-3">
-          <button className="btn btn-ghost btn-icon" onClick={() => router.push('/dashboard')}>
-            <ArrowLeft size={20} />
+      <div className="book-categories-heading">
+        <div className="book-page-heading">
+          <button className="btn btn-ghost btn-icon" aria-label={t.back} onClick={() => router.push('/dashboard')}>
+            <ArrowLeft className="book-back-icon" size={20} />
           </button>
-          <h1 style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+          <div><h1 className="book-page-title">
             {t.manageCategories}
           </h1>
+          <p className="book-page-description">{locale === 'he' ? 'לכל מתכון, המקום שלו בספר.' : 'A place in your book for every recipe.'}</p></div>
         </div>
         <button
           className="btn btn-primary btn-sm"
@@ -85,20 +86,14 @@ export default function CategoriesPage() {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="book-category-list">
           {categories.map((category, index) => (
             <motion.div
               key={category.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2, delay: index * 0.05 }}
-              className="glass-card"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-4)',
-                padding: 'var(--space-4) var(--space-5)',
-              }}
+              className="glass-card book-category-row"
             >
               <div
                 style={{
@@ -115,7 +110,7 @@ export default function CategoriesPage() {
               >
                 {category.icon}
               </div>
-              <div style={{ flex: 1 }}>
+              <div className="book-category-name">
                 <div style={{ fontWeight: 600, fontSize: 'var(--text-base)' }}>
                   {getCategoryName(category.name, locale)}
                 </div>
@@ -125,6 +120,7 @@ export default function CategoriesPage() {
                   className="btn btn-ghost btn-icon btn-sm"
                   onClick={() => handleEdit(category)}
                   title={t.edit}
+                  aria-label={`${t.edit}: ${getCategoryName(category.name, locale)}`}
                 >
                   <Edit size={16} />
                 </button>
@@ -132,6 +128,7 @@ export default function CategoriesPage() {
                   className="btn btn-ghost btn-icon btn-sm"
                   onClick={() => setDeletingId(category.id)}
                   title={t.delete}
+                  aria-label={`${t.delete}: ${getCategoryName(category.name, locale)}`}
                   style={{ color: 'var(--color-error)' }}
                 >
                   <Trash2 size={16} />
@@ -156,9 +153,9 @@ export default function CategoriesPage() {
       {/* Delete Confirmation */}
       {deletingId && (
         <div className="modal-overlay" onClick={() => setDeletingId(null)}>
-          <div className="modal-content animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="modal-content animate-scale-in book-dialog" role="dialog" aria-modal="true" aria-labelledby="category-delete-title" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{t.deleteCategory}</h2>
+              <h2 className="modal-title" id="category-delete-title">{t.deleteCategory}</h2>
             </div>
             <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)' }}>
               {locale === 'he'
