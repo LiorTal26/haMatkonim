@@ -7,7 +7,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Heart, Edit, Trash2, Clock, Users, ChefHat, Flame, Check,
+  ArrowLeft, Heart, Edit, Trash2, Clock, Users, ChefHat, Flame,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRecipes } from '@/hooks/useRecipes';
@@ -16,9 +16,10 @@ import { useToast } from '@/components/providers/ToastProvider';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import NoteBoard from '@/components/notes/NoteBoard';
 import ServingScaler from '@/components/recipes/ServingScaler';
+import { RecipeIngredients, RecipeInstructions } from '@/components/recipes/RecipeContent';
 import { Recipe } from '@/types';
 import { formatTime, getDifficultyLabel, getCategoryName } from '@/lib/utils';
-import { scaleIngredients, formatIngredient, normalizeIngredient } from '@/lib/scaleIngredients';
+import { scaleIngredients, normalizeIngredient } from '@/lib/scaleIngredients';
 import { motion } from 'framer-motion';
 
 export default function RecipeDetailPage() {
@@ -35,6 +36,7 @@ export default function RecipeDetailPage() {
 
   // Serving scaler state
   const [servingAdjustment, setServingAdjustment] = useState<{ recipeId: string; count: number } | null>(null);
+  const [roundQuantities, setRoundQuantities] = useState(true);
 
   const supabase = createClient();
   const recipeId = params.id as string;
@@ -350,9 +352,12 @@ export default function RecipeDetailPage() {
       {recipe.servings ? (
         <div style={{ marginBottom: 'var(--space-6)' }}>
           <ServingScaler
+            key={recipeId}
             originalServings={recipe.servings}
             adjustedServings={adjustedServings}
             onServingsChange={count => setServingAdjustment({ recipeId, count })}
+            roundQuantities={roundQuantities}
+            onRoundingChange={setRoundQuantities}
           />
         </div>
       ) : (
@@ -375,20 +380,7 @@ export default function RecipeDetailPage() {
                 </span>
               )}
             </h2>
-            <ul className="ingredient-list">
-              {displayIngredients.map((ingredient, i: number) => (
-                <li
-                  key={i}
-                  className={`ingredient-item ${checkedIngredients.has(i) ? 'checked' : ''} ${isScaled ? 'ingredient-scaled' : ''}`}
-                  onClick={() => toggleIngredient(i)}
-                >
-                  <div className="ingredient-checkbox">
-                    {checkedIngredients.has(i) && <Check size={14} color="white" />}
-                  </div>
-                  <span>{formatIngredient(ingredient, locale)}</span>
-                </li>
-              ))}
-            </ul>
+            <RecipeIngredients ingredients={displayIngredients} locale={locale} checked={checkedIngredients} onToggle={toggleIngredient} scaled={isScaled} round={roundQuantities} />
             {isScaled && displayIngredients.some(ing => typeof normalizeIngredient(ing) === 'string') && (
               <p className="serving-hint">{locale === 'he' ? 'מרכיבים ללא כמות מזוהה נשארו ללא שינוי. אפשר לערוך את המתכון ולהזין להם כמות.' : 'Ingredients without a recognised quantity are unchanged. Edit the recipe to add their quantities.'}</p>
             )}
@@ -399,14 +391,7 @@ export default function RecipeDetailPage() {
         {recipe.instructions.length > 0 && (
           <div>
             <h2 className="recipe-section-title">📋 {t.instructions}</h2>
-            <ol className="instruction-list">
-              {recipe.instructions.map((instruction, i) => (
-                <li key={i} className="instruction-item">
-                  <span className="instruction-number">{i + 1}</span>
-                  <span className="instruction-text">{instruction}</span>
-                </li>
-              ))}
-            </ol>
+            <RecipeInstructions instructions={recipe.instructions} />
           </div>
         )}
       </div>

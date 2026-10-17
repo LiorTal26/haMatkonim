@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Recipe sections and serving adjustments
+
+The editor can add named ingredient and instruction dividers (for example, Dough,
+Sauce, and Assembly). Ingredient headings use `kind: "section"` in the existing
+JSON array; instruction headings use the reserved `::recipe-section::` text prefix.
+No database migration is required, and legacy recipes remain readable. Empty
+headings are omitted on save; headings are not counted as numbered cooking steps.
+
+Serving changes never modify the saved recipe. Practical measurement rounding is
+optional and display-only, marks changed amounts with `≈`, and limits the rounding
+difference to 2%. Piece quantities are not rounded to whole items. Disable practical
+rounding to see the underlying calculated quantities.
+
 ## Recipe AI setup
 
 The recipe editor supports camera/gallery import and creating recipes from a text request.

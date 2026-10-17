@@ -4,11 +4,13 @@
 // Recipe Book — Structured Ingredient Input
 // ============================================
 
-import { Plus, X, GripVertical } from 'lucide-react';
+import { Plus, X, GripVertical, SeparatorHorizontal } from 'lucide-react';
 import { useId } from 'react';
 import { useApp } from '@/components/providers/AppProvider';
 import { StructuredIngredient, INGREDIENT_UNITS, createEmptyIngredient } from '@/types';
 import { useDragReorder } from '@/hooks/useDragReorder';
+import { createIngredientSection, isIngredientSection } from '@/lib/recipeSections';
+import SectionHeadingInput from './SectionHeadingInput';
 
 interface IngredientInputProps {
   ingredients: StructuredIngredient[];
@@ -36,6 +38,14 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
     onChange(updated.length ? updated : [createEmptyIngredient()]);
   };
 
+  const moveSection = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= ingredients.length) return;
+    const updated = [...ingredients];
+    [updated[index], updated[target]] = [updated[target], updated[index]];
+    onChange(updated);
+  };
+
   return (
     <div className="ingredient-input-container">
       {/* Header row labels */}
@@ -49,7 +59,9 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
       </div>
 
       {/* Ingredient rows */}
-      {ingredients.map((ingredient, index) => (
+      {ingredients.map((ingredient, index) => isIngredientSection(ingredient) ? (
+        <SectionHeadingInput key={index} title={ingredient.name} label={locale === 'he' ? 'כותרת לקבוצת רכיבים' : 'Ingredient group heading'} first={index === 0} last={index === ingredients.length - 1} onChange={name => updateIngredient(index, { name })} onMove={direction => moveSection(index, direction)} onRemove={() => removeIngredient(index)} />
+      ) : (
         <div
           key={index}
           className="ingredient-input-row"
@@ -174,14 +186,14 @@ export default function IngredientInput({ ingredients, onChange }: IngredientInp
       ))}
 
       {/* Add button */}
-      <button
+      <div className="recipe-list-actions"><button
         type="button"
         className="btn btn-ghost btn-sm"
         onClick={addIngredient}
         style={{ alignSelf: 'flex-start', marginTop: 'var(--space-2)' }}
       >
         <Plus size={14} /> {t.addIngredient}
-      </button>
+      </button><button type="button" className="btn btn-secondary btn-sm" onClick={() => onChange([...ingredients, createIngredientSection()])}><SeparatorHorizontal size={16} />{locale === 'he' ? 'הוספת כותרת / מפריד' : 'Add heading / divider'}</button></div>
     </div>
   );
 }

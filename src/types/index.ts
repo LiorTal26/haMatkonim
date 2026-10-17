@@ -45,6 +45,7 @@ export type IngredientUnit =
   | 'custom';   // מותאם אישית
 
 export interface StructuredIngredient {
+  kind?: 'section';           // A named divider, not an ingredient or quantity.
   quantity: number | null;   // null for "to taste" / "as needed"
   unit: IngredientUnit;
   name: string;

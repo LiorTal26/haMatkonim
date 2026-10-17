@@ -20,6 +20,8 @@ import CategoryForm from '@/components/categories/CategoryForm';
 import RecipeAIAssistant from '@/components/recipes/RecipeAIAssistant';
 import { normalizeIngredient } from '@/lib/scaleIngredients';
 import type { AIRecipeDraft } from '@/lib/recipeAI';
+import { cleanInstructions, createInstructionSection, getInstructionSection, instructionRows } from '@/lib/recipeSections';
+import SectionHeadingInput from './SectionHeadingInput';
 import { getCategoryName } from '@/lib/utils';
 
 interface RecipeFormProps {
@@ -68,6 +70,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
   });
 
   const isEdit = !!recipe;
+  const steps = instructionRows(formData.instructions);
 
   const applyAIDraft = (draft: AIRecipeDraft) => {
     setFormData(previous => ({
@@ -111,6 +114,16 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
     setFormData(prev => {
       const updated = prev.instructions.filter((_, i) => i !== index);
       return { ...prev, instructions: updated.length ? updated : [''] };
+    });
+  };
+
+  const moveInstruction = (index: number, direction: -1 | 1) => {
+    setFormData(previous => {
+      const target = index + direction;
+      if (target < 0 || target >= previous.instructions.length) return previous;
+      const instructions = [...previous.instructions];
+      [instructions[index], instructions[target]] = [instructions[target], instructions[index]];
+      return { ...previous, instructions };
     });
   };
 
@@ -176,7 +189,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         </h1>
       </div>
 
-      <RecipeAIAssistant onApply={applyAIDraft} formHasContent={Boolean(formData.title.trim() || formData.description.trim() || formData.ingredients.some(ing => ing.name.trim()) || formData.instructions.some(step => step.trim()))} />
+      <RecipeAIAssistant onApply={applyAIDraft} formHasContent={Boolean(formData.title.trim() || formData.description.trim() || formData.ingredients.some(ing => ing.name.trim()) || cleanInstructions(formData.instructions).length)} />
 
       <form onSubmit={handleSubmit} className="glass-card">
         {/* Image Upload */}
@@ -379,7 +392,9 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
         <div className="form-section">
           <h3 className="form-section-title">📋 {t.instructions}</h3>
           <div className="dynamic-list">
-            {formData.instructions.map((instruction, index) => (
+            {formData.instructions.map((instruction, index) => getInstructionSection(instruction) !== null ? (
+              <SectionHeadingInput key={index} title={getInstructionSection(instruction)!} label={locale === 'he' ? 'כותרת לקבוצת שלבים' : 'Instruction group heading'} first={index === 0} last={index === formData.instructions.length - 1} onChange={title => updateInstruction(index, createInstructionSection(title))} onMove={direction => moveInstruction(index, direction)} onRemove={() => removeInstruction(index)} />
+            ) : (
               <div
                 key={index}
                 className="dynamic-list-item"
@@ -430,14 +445,14 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
                     flexShrink: 0,
                   }}
                 >
-                  {index + 1}
+                  {steps[index].number}
                 </span>
                 <textarea
                   className="input"
                   value={instruction}
                   onChange={e => updateInstruction(index, e.target.value)}
-                  placeholder={`${t.step} ${index + 1}`}
-                  aria-label={`${t.step} ${index + 1}`}
+                  placeholder={`${t.step} ${steps[index].number}`}
+                  aria-label={`${t.step} ${steps[index].number}`}
                   rows={2}
                   style={{ minHeight: 60, resize: 'vertical' }}
                 />
@@ -445,6 +460,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
                   <button
                     type="button"
                     className="dynamic-list-remove"
+                    aria-label={`${t.delete} ${t.step} ${steps[index].number}`}
                     onClick={() => removeInstruction(index)}
                   >
                     <X size={16} />
@@ -460,6 +476,7 @@ export default function RecipeForm({ recipe }: RecipeFormProps) {
             >
               <Plus size={14} /> {t.addStep}
             </button>
+            <button type="button" className="btn btn-secondary btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => updateField('instructions', [...formData.instructions, createInstructionSection()])}>{locale === 'he' ? '+ הוספת כותרת / מפריד' : '+ Add heading / divider'}</button>
           </div>
         </div>
 

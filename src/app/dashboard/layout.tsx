@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useApp } from '@/components/providers/AppProvider';
 import ChooCelebration from '@/components/special/ChooCelebration';
 import { Recipe, RecipeFormData, SortOption, DifficultyFilter, TimeFilter, Category, CategoryFormData } from '@/types';
+import { cleanInstructions } from '@/lib/recipeSections';
 
 // ─── Recipes Context (single source of truth) ───────────────────────────────
 
@@ -199,7 +200,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         description: formData.description || null,
         category_id: primaryCategoryId,
         ingredients: formData.ingredients.filter(i => (i.name || '').trim()),
-        instructions: formData.instructions.filter(i => (i || '').trim()),
+        instructions: cleanInstructions(formData.instructions),
         image_url: formData.image_url || null,
         prep_time_minutes: Number(formData.prep_time_minutes) || null,
         cook_time_minutes: Number(formData.cook_time_minutes) || null,
@@ -247,7 +248,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       updates.ingredients = formData.ingredients.filter(i => (i.name || '').trim());
     }
     if (formData.instructions) {
-      updates.instructions = formData.instructions.filter(i => (i || '').trim());
+      updates.instructions = cleanInstructions(formData.instructions);
     }
     if (formData.prep_time_minutes !== undefined) {
       updates.prep_time_minutes = Number(formData.prep_time_minutes) || null;

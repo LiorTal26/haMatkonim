@@ -4,6 +4,7 @@
 
 import { StructuredIngredient, INGREDIENT_UNITS, Locale } from '@/types';
 import { FRACTIONS, parseLegacyIngredient } from './legacyIngredient';
+import { isIngredientSection } from './recipeSections';
 
 /**
  * Scale a single ingredient's quantity by a ratio.
@@ -16,7 +17,7 @@ export function scaleIngredient(
 ): StructuredIngredient | string {
   const ing = normalizeIngredient(ingredient);
 
-  if (typeof ing === 'string') return ing;
+  if (typeof ing === 'string' || isIngredientSection(ing)) return ing;
   if (ing.quantity === null || ing.quantity === undefined || ing.unit === 'to_taste') {
     return ing;
   }
@@ -58,6 +59,28 @@ export function formatQuantity(qty: number | null | undefined): string {
     if (Math.abs(frac - value) <= 0.005) return `${whole || ''}${symbol}`;
   }
   return new Intl.NumberFormat('en', { maximumSignificantDigits: 6, useGrouping: false }).format(qty);
+}
+
+/** Display-only rounding. Never round pieces up or erase small spice quantities. */
+export function roundCookingQuantity(quantity: number, unit: StructuredIngredient['unit']): number {
+  if (!Number.isFinite(quantity) || quantity <= 0) return quantity;
+  if (['piece', 'slice', 'clove', 'sprig', 'bunch', 'to_taste', 'custom'].includes(unit)) return quantity;
+  if (unit === 'g' || unit === 'ml') {
+    const step = quantity >= 100 ? 5 : quantity >= 10 ? 1 : quantity >= 1 ? 0.1 : null;
+    if (step) {
+      const rounded = Number((Math.round(quantity / step) * step).toPrecision(10));
+      if (Math.abs(rounded - quantity) / quantity <= 0.02) return rounded;
+    }
+  }
+  // Prefer familiar kitchen fractions only when the difference is at most 2%.
+  if (['cup', 'tbsp', 'tsp', 'pinch'].includes(unit)) {
+    const whole = Math.floor(quantity);
+    const candidates = Object.values(FRACTIONS).map(fraction => whole + fraction);
+    candidates.push(whole, whole + 1);
+    const nearest = candidates.reduce((best, value) => Math.abs(value - quantity) < Math.abs(best - quantity) ? value : best);
+    if (nearest > 0 && Math.abs(nearest - quantity) / quantity <= 0.02) return nearest;
+  }
+  return Number(quantity.toPrecision(3));
 }
 
 /**
@@ -109,7 +132,8 @@ export function normalizeIngredient(ingredient: StructuredIngredient | string): 
  */
 export function formatIngredient(
   ingredient: StructuredIngredient | string,
-  locale: Locale
+  locale: Locale,
+  options: { round?: boolean } = {},
 ): string {
   const ing = normalizeIngredient(ingredient);
 
@@ -118,16 +142,22 @@ export function formatIngredient(
     return ing;
   }
   if (!ing) return '';
+  if (isIngredientSection(ing)) return ing.name;
 
   if (ing.unit === 'to_taste') {
     const suffix = locale === 'he' ? 'לפי הטעם' : 'to taste';
-    return `${ing.name || ''} — ${suffix}`;
+    return `${ing.name || ''} — ${suffix}${ing.note ? ` (${ing.note})` : ''}`;
   }
 
   const parts: string[] = [];
 
   if (ing.quantity !== null && ing.quantity !== undefined) {
-    parts.push(formatQuantity(ing.quantity));
+    const displayed = options.round ? roundCookingQuantity(ing.quantity, ing.unit) : ing.quantity;
+    const approximate = Math.abs(displayed - ing.quantity) > Math.max(1e-8, ing.quantity * 1e-8);
+    const formatted = ['g', 'kg', 'ml', 'l'].includes(ing.unit)
+      ? new Intl.NumberFormat('en', { maximumSignificantDigits: 6, useGrouping: false }).format(displayed)
+      : formatQuantity(displayed);
+    parts.push(`${approximate ? '≈ ' : ''}${formatted}`);
   }
 
   if (ing.unit && ing.unit !== 'piece') {

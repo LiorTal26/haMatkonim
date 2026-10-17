@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { scaleIngredients, normalizeIngredient, formatIngredient, formatQuantity } from '../src/lib/scaleIngredients';
+import { scaleIngredients, normalizeIngredient, formatIngredient, formatQuantity, roundCookingQuantity } from '../src/lib/scaleIngredients';
+import { createIngredientSection, isIngredientSection, createInstructionSection, getInstructionSection, instructionRows, cleanInstructions } from '../src/lib/recipeSections';
+import { parseServingCount } from '../src/lib/servings';
 import { CATEGORY_EMOJIS } from '../src/lib/categoryIcons';
 import { validateRecipeDraft, type AIRecipeDraft } from '../src/lib/recipeAI';
 import { createRecipeAIHandlers } from '../src/lib/recipeAIHandler';
@@ -53,6 +55,44 @@ test('category icons include the new food groups and are unique', () => {
   assert.ok(CATEGORY_EMOJIS.length >= 90);
   assert.equal(new Set(CATEGORY_EMOJIS).size, CATEGORY_EMOJIS.length);
   for (const icon of ['🍣', '🍿', '🥢', '🥟', '🍱']) assert.ok(CATEGORY_EMOJIS.includes(icon));
+});
+
+test('section headings round-trip through existing JSON ingredients and text instructions', () => {
+  const heading = createIngredientSection('לרוטב');
+  const normalized = normalizeIngredient(JSON.stringify(heading));
+  assert.ok(isIngredientSection(normalized));
+  assert.deepEqual(normalized, heading);
+  assert.deepEqual(scaleIngredients([heading], 2, 8), [heading]);
+  assert.equal(formatIngredient(heading, 'he'), 'לרוטב');
+  const title = createInstructionSection('הרכבה ואפייה');
+  assert.equal(getInstructionSection(title), 'הרכבה ואפייה');
+  assert.equal(getInstructionSection('הוראה ישנה רגילה'), null);
+  assert.deepEqual(instructionRows([title, 'ערבבו', createInstructionSection('אפייה'), 'אפו']).map(row => row.number), [null, 1, null, 2]);
+  assert.deepEqual(cleanInstructions(['', createInstructionSection('  '), title, 'ערבבו']), [title, 'ערבבו']);
+});
+
+test('practical rounding is display-only, unit-aware and never rounds eggs up', () => {
+  const flour = { quantity: 166.6666667, unit: 'g' as const, name: 'קמח' };
+  assert.equal(roundCookingQuantity(flour.quantity, 'g'), 165);
+  assert.equal(roundCookingQuantity(33.333333, 'ml'), 33);
+  assert.equal(roundCookingQuantity(0.6666667, 'cup'), 2 / 3);
+  assert.equal(roundCookingQuantity(1.5, 'piece'), 1.5);
+  assert.equal(roundCookingQuantity(0.012345, 'tsp'), 0.0123);
+  assert.ok(roundCookingQuantity(0.000012345, 'g') > 0);
+  assert.equal(formatIngredient(flour, 'he', { round: true }), '≈ 165 גר׳ קמח');
+  assert.equal(formatIngredient({ ...flour, quantity: 187.5 }, 'he'), '187.5 גר׳ קמח');
+  assert.equal(flour.quantity, 166.6666667);
+  assert.ok(!formatIngredient(flour, 'he').includes('≈'));
+  for (const quantity of [0.00012345, 1.05, 2.25, 10.5, 99.9, 102.5, 166.6667]) {
+    assert.ok(Math.abs(roundCookingQuantity(quantity, 'g') - quantity) / quantity <= 0.02);
+  }
+});
+
+test('serving input accepts replacements but rejects empty, decimal or out-of-range values', () => {
+  for (const value of ['', '0', '-1', '2.5', '1001', 'NaN', '1e2']) assert.equal(parseServingCount(value), null);
+  assert.equal(parseServingCount('12'), 12);
+  assert.equal(parseServingCount('1000'), 1000);
+  assert.equal(parseServingCount(' 8 '), 8);
 });
 
 const draft: AIRecipeDraft = {
