@@ -36,6 +36,12 @@ rounding to see the underlying calculated quantities.
 ## Recipe AI setup
 
 The recipe editor supports camera/gallery import and creating recipes from a text request.
+Attach up to six photos of one recipe, in a single gallery selection or by adding
+photos one at a time. Preview, reorder, or remove individual pages before generating
+one combined draft. Images are compressed locally, with a combined 3 MiB decoded
+upload limit to fit Vercel's request limit after base64 encoding. No recipe photos
+are sent until the generation button is pressed. Already-open clients that send
+the old single-image request remain supported by the server.
 Results are drafts: review the ingredients, quantities and steps, fill the regular editor,
 then press Save to persist through the existing Supabase recipe flow. Importing a photo
 does not upload the original page to your public recipe image bucket.

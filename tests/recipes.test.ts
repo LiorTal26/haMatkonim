@@ -4,7 +4,7 @@ import { scaleIngredients, normalizeIngredient, formatIngredient, formatQuantity
 import { createIngredientSection, isIngredientSection, createInstructionSection, getInstructionSection, instructionRows, cleanInstructions } from '../src/lib/recipeSections';
 import { parseServingCount } from '../src/lib/servings';
 import { CATEGORY_EMOJIS } from '../src/lib/categoryIcons';
-import { validateRecipeDraft, type AIRecipeDraft } from '../src/lib/recipeAI';
+import { MAX_RECIPE_IMAGES, MAX_RECIPE_TOTAL_IMAGE_BYTES, recipeImageBytes, validateRecipeDraft, type AIRecipeDraft } from '../src/lib/recipeAI';
 import { createRecipeAIHandlers } from '../src/lib/recipeAIHandler';
 
 test('scaling doubles quantities, preserves unquantified ingredients and never mutates the source', () => {
@@ -172,6 +172,50 @@ test('photo import sends the selected image to the vision model', async () => {
   const api = handlers({ fetch: async (_url, options) => { const body = JSON.parse(String(options?.body)); sawImage = body.contents[0].parts.some((item: { inline_data?: { mime_type: string; data: string } }) => item.inline_data?.mime_type === 'image/png' && item.inline_data.data === image.split(',')[1]); return providerResult(); } });
   assert.equal((await api.POST(request({ mode: 'photo', image }))).status, 200);
   assert.equal(sawImage, true);
+});
+
+test('multiple recipe pages are sent in order in one provider request', async () => {
+  const images = ['data:image/jpeg;base64,/9j/AQ==', 'data:image/jpeg;base64,/9j/Ag==', 'data:image/jpeg;base64,/9j/Aw=='];
+  let calls = 0;
+  const api = handlers({ fetch: async (_url, options) => {
+    calls++;
+    const body = JSON.parse(String(options?.body));
+    assert.deepEqual(body.contents[0].parts.filter((part: { inline_data?: unknown }) => part.inline_data).map((part: { inline_data: { data: string } }) => part.inline_data.data), images.map(image => image.split(',')[1]));
+    assert.ok(body.contents[0].parts.some((part: { text?: string }) => part.text === 'Recipe page 2 of 3.'));
+    assert.match(body.systemInstruction.parts[0].text, /ONE recipe/);
+    assert.match(body.systemInstruction.parts[0].text, /do not duplicate/);
+    return providerResult();
+  } });
+  const response = await api.POST(request({ mode: 'photo', images }));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).draft, draft);
+  assert.equal(calls, 1);
+});
+
+test('allows six photos but rejects empty, excessive or malformed image collections', async () => {
+  const image = 'data:image/jpeg;base64,/9j/AQ==';
+  assert.equal((await handlers().POST(request({ mode: 'photo', images: Array(MAX_RECIPE_IMAGES).fill(image) }))).status, 200);
+  const api = handlers({ fetch: async () => { throw new Error('Must not call'); } });
+  for (const images of [[], Array(MAX_RECIPE_IMAGES + 1).fill(image), null, 'not-an-array', [image, null], [image, 'https://example.com/page.png'], [image, 'data:image/png;base64,YmFk']]) {
+    assert.equal((await api.POST(request({ mode: 'photo', images }))).status, 400);
+  }
+  assert.equal((await api.POST(request({ mode: 'photo', images: [], image }))).status, 400, 'Do not silently substitute legacy data for an invalid new selection');
+});
+
+test('the combined image limit applies even when each image is under the individual limit', async () => {
+  const jpeg = Buffer.alloc(MAX_RECIPE_TOTAL_IMAGE_BYTES / 2 + 1024);
+  jpeg.set([0xff, 0xd8, 0xff]);
+  const image = `data:image/jpeg;base64,${jpeg.toString('base64')}`;
+  const response = await handlers({ fetch: async () => { throw new Error('Must not call'); } }).POST(request({ mode: 'photo', images: [image, image] }));
+  assert.equal(response.status, 413);
+  assert.equal((await response.json()).code, 'tooLarge');
+});
+
+test('decoded image sizing accounts for base64 padding without undercounting', () => {
+  for (const bytes of [Buffer.from([255, 216, 255]), Buffer.from([255, 216, 255, 1]), Buffer.from([255, 216, 255, 1, 2])]) {
+    assert.equal(recipeImageBytes(`data:image/jpeg;base64,${bytes.toString('base64')}`), bytes.length);
+  }
+  for (const value of ['', 'https://example.com/photo.jpg', 'data:image/jpeg;base64,abc', 'data:text/plain;base64,YWJj']) assert.equal(recipeImageBytes(value), null);
 });
 
 test('handles provider failures, refusals and incomplete responses without exposing credentials', async () => {

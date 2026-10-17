@@ -1,4 +1,4 @@
-import { MAX_RECIPE_IMAGE_BYTES, MAX_RECIPE_PROMPT_LENGTH, isRecord, recipeDraftSchema, validateRecipeDraft } from './recipeAI';
+import { MAX_RECIPE_TOTAL_IMAGE_BYTES, MAX_RECIPE_IMAGES, MAX_RECIPE_PROMPT_LENGTH, isRecord, recipeDraftSchema, validateRecipeDraft } from './recipeAI';
 
 interface Dependencies {
   getUserId: () => Promise<string | null>;
@@ -28,8 +28,8 @@ const messages = {
   configuration: ['לא ניתן לאמת את מפתח Gemini. יש לבדוק את הגדרת GEMINI_API_KEY ב־Vercel.', 'Gemini could not authenticate the API key. Check GEMINI_API_KEY in Vercel.'],
   modelUnavailable: ['מודל ה־AI אינו זמין לפרויקט Google הזה. יש לבדוק את הגדרת GEMINI_RECIPE_MODEL.', 'The AI model is not available for this Google project. Check GEMINI_RECIPE_MODEL.'],
   quota: ['מכסת הבקשות של Gemini נוצלה או הוגבלה. נסו שוב מאוחר יותר; אין מעבר אוטומטי למסלול בתשלום.', 'Gemini quota has been exhausted or limited. Try again later; there is no automatic upgrade to a paid tier.'],
-  invalid: ['בחרו תמונת מתכון תקינה או כתבו בקשה של עד 3,000 תווים.', 'Choose a valid recipe image or enter a request of up to 3,000 characters.'],
-  tooLarge: ['התמונה גדולה מדי. בחרו תמונה קטנה יותר.', 'The image is too large. Choose a smaller image.'],
+  invalid: [`בחרו בין תמונה אחת ל־${MAX_RECIPE_IMAGES} תמונות תקינות של אותו מתכון, או כתבו בקשה של עד 3,000 תווים.`, `Choose 1–${MAX_RECIPE_IMAGES} valid images of the same recipe, or enter a request of up to 3,000 characters.`],
+  tooLarge: ['התמונות גדולות מדי יחד. בחרו תמונות קטנות יותר או פחות תמונות.', 'The combined images are too large. Choose smaller or fewer images.'],
   rate: ['בוצעו יותר מדי בקשות. נסו שוב בעוד כמה דקות.', 'Too many requests. Please try again in a few minutes.'],
   provider: ['לא הצלחנו ליצור טיוטה כרגע. נסו שוב בעוד רגע.', 'Could not create a draft right now. Please try again shortly.'],
   unreadable: ['לא זוהה מתכון ברור. נסו צילום חד יותר שכולל את המרכיבים וההוראות.', 'No clear recipe was found. Try a sharper photo containing ingredients and instructions.'],
@@ -39,18 +39,19 @@ function error(code: keyof typeof messages, status: number, locale = 'he') {
   return Response.json({ error: messages[code][locale === 'en' ? 1 : 0], code }, { status, headers: { 'Cache-Control': 'no-store', ...(status === 429 ? { 'Retry-After': '600' } : {}) } });
 }
 
-function validImage(image: string): boolean {
+function validImageBytes(image: string): number | null {
   const match = image.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
-  if (!match || match[2].length % 4 !== 0) return false;
+  if (!match || match[2].length % 4 !== 0) return null;
   const bytes = Buffer.from(match[2], 'base64');
-  if (bytes.length === 0 || bytes.length > MAX_RECIPE_IMAGE_BYTES) return false;
-  if (match[1] === 'jpeg') return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (match[1] === 'png') return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
-  return bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
+  if (bytes.length === 0) return null;
+  const valid = match[1] === 'jpeg' ? bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+    : match[1] === 'png' ? bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+    : bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
+  return valid ? bytes.length : null;
 }
 
 async function readBody(request: Request): Promise<string> {
-  const limit = MAX_RECIPE_IMAGE_BYTES * 4 / 3 + 16 * 1024;
+  const limit = MAX_RECIPE_TOTAL_IMAGE_BYTES * 4 / 3 + 16 * 1024;
   if (Number(request.headers.get('content-length')) > limit) throw new Error('tooLarge');
   if (!request.body) throw new Error('invalid');
   const reader = request.body.getReader();
@@ -87,10 +88,23 @@ export function createRecipeAIHandlers(deps: Dependencies) {
       const locale = payload.locale === 'en' ? 'en' : 'he';
       const mode = payload.mode;
       const prompt = typeof payload.prompt === 'string' ? payload.prompt.trim() : '';
-      const image = typeof payload.image === 'string' ? payload.image : '';
+      let images: string[] = [];
       if (mode !== 'photo' && mode !== 'text') return error('invalid', 400, locale);
       if (prompt.length > MAX_RECIPE_PROMPT_LENGTH || (mode === 'text' && !prompt)) return error('invalid', 400, locale);
-      if (mode === 'photo' && !validImage(image)) return error('invalid', 400, locale);
+      if (mode === 'photo') {
+        // Keep already-open clients that send a single `image` working.
+        const selected = Array.isArray(payload.images) ? payload.images
+          : payload.images === undefined && typeof payload.image === 'string' ? [payload.image] : [];
+        if (!selected.length || selected.length > MAX_RECIPE_IMAGES || !selected.every((image): image is string => typeof image === 'string')) return error('invalid', 400, locale);
+        let totalBytes = 0;
+        for (const image of selected) {
+          const size = validImageBytes(image);
+          if (size === null) return error('invalid', 400, locale);
+          totalBytes += size;
+          if (totalBytes > MAX_RECIPE_TOTAL_IMAGE_BYTES) return error('tooLarge', 413, locale);
+        }
+        images = selected;
+      }
       const apiKey = deps.apiKey();
       if (!apiKey) return error('unavailable', 503, locale);
       const model = deps.model()?.trim() || DEFAULT_RECIPE_MODEL;
@@ -103,14 +117,17 @@ export function createRecipeAIHandlers(deps: Dependencies) {
         'Use numeric quantities, converting fractions. Put ingredient preparation details and unrecognised units in note.',
         'Use null for unknown quantities, servings and times. Use to_taste only when explicitly stated.',
         mode === 'photo'
-          ? 'Transcribe only what is readable in the recipe image. Never invent missing ingredients, amounts, servings or steps. Add warnings about illegible or missing content. For a non-recipe image, return an empty title and ingredient list.'
+          ? 'Read all supplied images in their numbered order as pages of ONE recipe. Combine ingredients and instructions across pages; do not duplicate content repeated in overlapping photos. Never merge unrelated recipes: if the photos clearly show different recipes, return an empty title and ingredient list. Transcribe only readable content. Never invent missing ingredients, amounts, servings or steps. Add warnings about illegible or missing content. For non-recipe images, return an empty title and ingredient list.'
           : 'Create a practical, complete recipe that satisfies the user request, including ingredient quantities, servings, times and ordered steps. Mark any assumptions in warnings.',
         'Do not include markdown, external URLs, or HTML. Return only the recipe data.',
       ].join('\n');
-      const parts: Record<string, unknown>[] = [{ text: mode === 'photo' ? 'Read the recipe in this image.' : prompt }];
+      const parts: Record<string, unknown>[] = [{ text: mode === 'photo' ? `Read these ${images.length} images as ordered pages of one recipe.` : prompt }];
       if (mode === 'photo') {
-        const comma = image.indexOf(',');
-        parts.push({ inline_data: { mime_type: image.slice(5, image.indexOf(';')), data: image.slice(comma + 1) } });
+        images.forEach((image, index) => {
+          const comma = image.indexOf(',');
+          parts.push({ text: `Recipe page ${index + 1} of ${images.length}.` });
+          parts.push({ inline_data: { mime_type: image.slice(5, image.indexOf(';')), data: image.slice(comma + 1) } });
+        });
       }
       try {
         const response = await (deps.fetch || fetch)(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {

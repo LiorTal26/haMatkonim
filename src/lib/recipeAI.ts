@@ -14,7 +14,17 @@ export interface AIRecipeDraft {
 
 // Base64 adds ~33%; keep the JSON upload under Vercel's 4.5 MB request limit.
 export const MAX_RECIPE_IMAGE_BYTES = 3 * 1024 * 1024;
+export const MAX_RECIPE_TOTAL_IMAGE_BYTES = MAX_RECIPE_IMAGE_BYTES;
+export const MAX_RECIPE_IMAGES = 6;
 export const MAX_RECIPE_PROMPT_LENGTH = 3000;
+
+/** Exact decoded size without allocating a binary copy in the browser. */
+export function recipeImageBytes(image: string): number | null {
+  const match = image.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
+  if (!match || match[2].length % 4 !== 0) return null;
+  const padding = match[2].endsWith('==') ? 2 : match[2].endsWith('=') ? 1 : 0;
+  return match[2].length * 3 / 4 - padding;
+}
 
 export const recipeDraftSchema = {
   type: 'object', additionalProperties: false,
